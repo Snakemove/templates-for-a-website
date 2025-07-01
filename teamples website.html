@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Складской учет - Система управления</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.6); }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .sidebar-link.active { background-color: #3B82F6; color: white; }
+        .expired { background-color: #fee2e2 !important; }
+        .expiring-soon { background-color: #fef3c7 !important; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen flex">
+        <!-- Сайдбар -->
+        <div class="w-64 bg-gray-800 text-white p-4">
+            <h1 class="text-2xl font-bold mb-6 border-b pb-4">Складской учет</h1>
+            <nav>
+                <ul>
+                    <li class="mb-2">
+                        <a href="#" class="sidebar-link active flex items-center p-2 rounded hover:bg-blue-600 transition" onclick="showDashboard()">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                            </svg>
+                            Панель управления
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="sidebar-link flex items-center p-2 rounded hover:bg-blue-600 transition" onclick="showProducts()">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                            Товары на складе
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="sidebar-link flex items-center p-2 rounded hover:bg-blue-600 transition" onclick="showExpiredProducts()">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Просроченные
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="sidebar-link flex items-center p-2 rounded hover:bg-blue-600 transition" onclick="showCategories()">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            Категории
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="sidebar-link flex items-center p-2 rounded hover:bg-blue-600 transition" onclick="showManufacturers()">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                            Производители
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="sidebar-link flex items-center p-2 rounded hover:bg-blue-600 transition" onclick="showSuppliers()">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                            Поставщики
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="sidebar-link flex items-center p-2 rounded hover:bg-blue-600 transition" onclick="showShipments()">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                            Отгрузки
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Основное содержимое -->
+        <div class="flex-1 p-8">
+            <!-- Панель управления -->
+            <div id="dashboard" class="content-section">
+                <h2 class="text-2xl font-bold mb-6">Панель управления складом</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold mb-2">Общее количество товаров</h3>
+                        <p class="text-3xl font-bold text-blue-600" id="total-products">0</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold mb-2">Товаров на складе</h3>
+                        <p class="text-3xl font-bold text-green-600" id="in-stock">0</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold mb-2">Заканчиваются</h3>
+                        <p class="text-3xl font-bold text-yellow-600" id="low-stock">0</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold mb-2">Просроченные</h3>
+                        <p class="text-3xl font-bold text-red-600" id="expired-products">0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6 mb-8">
+                    <h3 class="text-lg font-semibold mb-4">Скоро истекает срок</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white" id="expiring-table">
+                            <thead>
+                                <tr>
+                                    <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Товар</th>
+                                    <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Производитель</th>
+                                    <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Количество</th>
+                                    <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Срок годности</th>
+                                    <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Осталось дней</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold mb-4">Последние отгрузки</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white" id="recent-shipments">
+                            <thead>
+                                <tr>
+                                    <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Дата</th>
+                                    <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Товар</th>
+                                    <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Количество</th>
+                                    <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Получатель</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Товары на складе -->
+            <div id="products" class="content-section hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Товары на складе</h2>
+                    <button onclick="openAddProductModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Принять товар
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:space-x-4">
+                        <div class="flex-1 mb-4 md:mb-0">
+                            <input type="text" id="product-search" placeholder="Поиск товаров..." class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200">
+                        </div>
+                        <div class="flex space-x-2">
+                            <select id="category-filter" class="px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200">
+                                <option value="">Все категории</option>
+                            </select>
+                            <select id="manufacturer-filter" class="px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200">
+                                <option value="">Все производители</option>
+                            </select>
+                            <select id="stock-filter" class="px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200">
+                                <option value="">Любой остаток</option>
+                                <option value="in-stock">В наличии</option>
+                                <option value="low-stock">Мало осталось</option>
+                                <option value="out-of-stock">Нет в наличии</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white rounded-lg overflow-hidden">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Категория</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Производитель</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Срок годности</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Количество</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Цена</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200" id="products-table">
+                            <!-- Товары будут добавлены через JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Просроченные товары -->
+            <div id="expired-products-section" class="content-section hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Просроченные товары</h2>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:space-x-4">
+                        <div class="flex-1 mb-4 md:mb-0">
+                            <input type="text" id="expired-search" placeholder="Поиск просроченных товаров..." class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200">
+                        </div>
+                        <div class="flex space-x-2">
+                            <select id="expired-category-filter" class="px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200">
+                                <option value="">Все категории</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white rounded-lg overflow-hidden">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Категория</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Производитель</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата производства</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Срок годности</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Количество</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дней просрочки</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200" id="expired-products-table">
+                            <!-- Просроченные товары будут добавлены через JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Категории -->
+            <div id="categories" class="content-section hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Категории товаров</h2>
+                    <button onclick="openAddCategoryModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Добавить категорию
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Описание</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Кол-во товаров</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="categories-table">
+                            <!-- Категории будут добавлены через JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Производители -->
+            <div id="manufacturers" class="content-section hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Производители товаров</h2>
+                    <button onclick="openAddManufacturerModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Добавить производителя
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Страна</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Контактный email</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Кол-во товаров</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="manufacturers-table">
+                            <!-- Производители будут добавлены через JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Поставщики -->
+            <div id="suppliers" class="content-section hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Поставщики товаров</h2>
+                    <button onclick="openAddSupplierModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Добавить поставщика
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Адрес</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Телефон</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="suppliers-table">
+                            <!-- Поставщики будут добавлены через JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Отгрузки -->
+            <div id="shipments" class="content-section hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Отгрузки товаров</h2>
+                    <button onclick="openShipmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Новая отгрузка
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Товар</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Категория</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Количество</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Получатель</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Куда отправлено</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="shipments-table">
+                            <!-- Отгрузки будут добавлены через JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для приема товара -->
+    <div id="add-product-modal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute w-full h-full"></div>
+        <div class="absolute top-0 right-0 bottom-0 left-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl transform transition-all fade-in">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Прием товара на склад</h3>
+                        <button onclick="closeModal('add-product-modal')" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="product-name">Название товара *</label>
+                                <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="product-name" type="text" placeholder="Введите название">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="product-description">Описание товара</label>
+                                <textarea class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="product-description" rows="3" placeholder="Введите описание товара"></textarea>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="product-category">Категория *</label>
+                                <select class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="product-category">
+                                    <option value="">Выберите категорию</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-grained-700 text-sm font-bold mb-2" for="product-manufacturer">Производитель *</label>
+                                <select class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="product-manufacturer">
+                                    <option value="">Выберите производителя</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="product-price">Цена за единицу *</label>
+                                <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="product-price" type="number" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="product-quantity">Количество *</label>
+                                <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="product-quantity" type="number" min="1" placeholder="1">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="product-production-date">Дата производства *</label>
+                                <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="product-production-date" type="date">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="product-expiry-date">Срок годности (дни) *</label>
+                                <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="product-expiry-days" type="number" min="1" placeholder="365">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-4">
+                        <button onclick="closeModal('add-product-modal')" class="px-4 py-2 border rounded hover:bg-gray-100">
+                            Отменить
+                        </button>
+                        <button onclick="addProduct()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                            Принять товар
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для отгрузки товара -->
+    <div id="shipment-modal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute w-full h-full"></div>
+        <div class="absolute top-0 right-0 bottom-0 left-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl transform transition-all fade-in">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Отгрузка товара со склада</h3>
+                        <button onclick="closeModal('shipment-modal')" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="shipment-product">Товар *</label>
+                                <select class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="shipment-product" onchange="updateAvailableQuantity()">
+                                    <option value="">Выберите товар</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="shipment-available">Доступно на складе</label>
+                                <input class="w-full px-3 py-2 border rounded bg-gray-100" id="shipment-available" type="number" readonly>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="shipment-quantity">Количество для отгрузки *</label>
+                                <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="shipment-quantity" type="number" min="1" placeholder="1">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="shipment-recipient">Получатель *</label>
+                                <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="shipment-recipient" type="text" placeholder="ФИО или название организации">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="shipment-destination">Куда отправляется *</label>
+                                <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="shipment-destination" type="text" placeholder="Адрес или название места">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="shipment-date">Дата отгрузки *</label>
+                                <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="shipment-date" type="date">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-4">
+                        <button onclick="closeModal('shipment-modal')" class="px-4 py-2 border rounded hover:bg-gray-100">
+                            Отменить
+                        </button>
+                        <button onclick="createShipment()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                            Зарегистрировать отгрузку
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно добавления категории -->
+    <div id="category-modal" class="fixed inset-0 z-50 hidden">
+        <!-- ... (аналогично предыдущей реализации) ... -->
+    </div>
+
+    <!-- Модальное окно добавления производителя -->
+    <div id="manufacturer-modal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute w-full h-full"></div>
+        <div class="absolute top-0 right-0 bottom-0 left-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md transform transition-all fade-in">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold" id="manufacturer-modal-title">Добавить производителя</h3>
+                        <button onclick="closeModal('manufacturer-modal')" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <input type="hidden" id="edit-manufacturer-id">
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="manufacturer-name">Название компании *</label>
+                        <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="manufacturer-name" type="text" placeholder="Введите название компании">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="manufacturer-country">Страна *</label>
+                        <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="manufacturer-country" type="text" placeholder="Страна производства">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="manufacturer-email">Контактный email *</label>
+                        <input class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200" id="manufacturer-email" type="email" placeholder="email@example.com">
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button onclick="closeModal('manufacturer-modal')" class="px-4 py-2 border rounded hover:bg-gray-100">
+                            Отменить
+                        </button>
+                        <button onclick="saveManufacturer()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                            Сохранить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно подтверждения удаления -->
+    <div id="confirm-delete-modal" class="fixed inset-0 z-50 hidden">
+        <!-- ... (аналогично предыдущей реализации) ... -->
+    </div>
+
+    <!-- Уведомления -->
+    <div id="notification" class="fixed top-4 right-4 z-50 hidden">
+        <!-- ... (аналогично предыдущей реализации) ... -->
+    </div>
+
+    <script>
+        // Улучшенные классы для базы данных
+        class Product {
+            constructor(id, name, description, categoryId, manufacturerId, price, quantity, productionDate, expiryDays) {
+                this.id = id;
+                this.name = name;
+                this.description = description;
+                this.categoryId = categoryId;
+                this.manufacturerId = manufacturerId;
+                this.price = price;
+                this.quantity = quantity;
+                this.productionDate = new Date(productionDate);
+                this.expiryDays = expiryDays;
+                this.createdAt = new Date();
+                this.updatedAt = new Date();
+            }
+
+            get expiryDate() {
+                const date = new Date(this.productionDate);
+                date.setDate(date.getDate() + this.expiryDays);
+                return date;
+            }
+
+            isExpired() {
+                return this.expiryDate < new Date();
+            }
+
+            daysUntilExpiry() {
+                const today = new Date();
+                const diffTime = this.expiryDate - today;
+                return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            }
+        }
+
+        class Category {
+            constructor(id, name, description) {
+                this.id = id;
+                this.name = name;
+                this.description = description;
+                this.createdAt = new Date();
+                this.updatedAt = new Date();
+            }
+        }
+
+        class Manufacturer {
+            constructor(id, name, country, email) {
+                this.id = id;
+                this.name = name;
+                this.country = country;
+                this.email = email;
+                this.createdAt = new Date();
+                this.updatedAt = new Date();
+            }
+        }
+
+        class Supplier {
+            constructor(id, name, address, phone, email) {
+                this.id = id;
+                this.name = name;
+                this.address = address;
+                this.phone = phone;
+                this.email = email;
+                this.createdAt = new Date();
+                this.updatedAt = new Date();
+            }
+        }
+
+        class Shipment {
+            constructor(id, productId, quantity, recipient, destination, date) {
+                this.id = id;
+                this.productId = productId;
+                this.quantity = quantity;
+                this.recipient = recipient;
+                this.destination = destination;
+                this.date = new Date(date);
+                this.createdAt = new Date();
+            }
+        }
+
+        // Реализация базы данных в памяти
+        const db = {
+            products: [],
+            categories: [],
+            manufacturers: [],
+            suppliers: [],
+            shipments: [],
+            
+            initSampleData: function() {
+                // Добавляем категории
+                this.categories.push(new Category(1, "Продукты питания", "Пищевые продукты и напитки"));
+                this.categories.push(new Category(2, "Бытовая химия", "Средства для уборки и гигиены"));
+                this.categories.push(new Category(3, "Медикаменты", "Лекарственные средства и БАДы"));
+                
+                // Добавляем производителей
+                this.manufacturers.push(new Manufacturer(1, "ОАО 'Молпродукт'", "Россия", "info@molproduct.ru"));
+                this.manufacturers.push(new Manufacturer(2, "CleanCo International", "Германия", "sales@cleanco.de"));
+                this.manufacturers.push(new Manufacturer(3, "Фармакор Продакшн", "Россия", "order@pharmacor.ru"));
+                
+                // Добавляем поставщиков
+                this.suppliers.push(new Supplier(1, "ПродуктТорг", "г. Москва, ул. Продовольственная, 15", "+7 (495) 123-45-67", "info@produktorg.ru"));
+                this.suppliers.push(new Supplier(2, "ХимСнаб", "г. Москва, ул. Промышленная, 22", "+7 (495) 987-65-43", "sales@chemsnab.ru"));
+                this.suppliers.push(new Supplier(3, "ФармаПлюс", "г. Москва, ул. Аптечная, 5", "+7 (495) 555-12-34", "order@pharmaplus.ru"));
+                
+                // Добавляем товары с разными сроками годности
+                const today = new Date();
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                
+                const nextWeek = new Date(today);
+                nextWeek.setDate(nextWeek.getDate() + 7);
+                
+                const lastMonth = new Date(today);
+                lastMonth.setMonth(lastMonth.getMonth() - 1);
+                
+                this.products.push(new Product(
+                    1, 
+                    "Молоко 'Домик в деревне' 3.2%", 
+                    "Молоко пастеризованное, 1 литр", 
+                    1, 
+                    1, 
+                    85.50, 
+                    50,
+                    yesterday.toISOString().split('T')[0],
+                    7 // 7 дней срок годности
+                ));
+                
+                this.products.push(new Product(
+                    2, 
+                    "Средство для мытья посуды 'Fairy'", 
+                    "Средство для мытья посуды, лимон, 500 мл", 
+                    2, 
+                    2, 
+                    150.00, 
+                    25,
+                    lastMonth.toISOString().split('T')[0],
+                    730 // 2 года
+                ));
+                
+                this.products.push(new Product(
+                    3, 
+                    "Аспирин таблетки 500 мг", 
+                    "Обезболивающее средство, 10 таблеток", 
+                    3, 
+                    3, 
+                    80.00, 
+                    100,
+                    nextWeek.toISOString().split('T')[0],
+                    180 // 6 месяцев
+                ));
+                
+                // Добавляем отгрузки
+                this.shipments.push(new Shipment(
+                    1,
+                    1,
+                    10,
+                    "Иванов Иван Иванович",
+                    "Магазин 'Продукты' ул. Центральная, 1",
+                    yesterday.toISOString().split('T')[0]
+                ));
+            },
+            
+            // Методы для работы с товарами
+            getAllProducts: function() {
+                return this.products;
+            },
+            
+            getProductById: function(id) {
+                return this.products.find(product => product.id === id);
+            },
+            
+            getProductsByCategory: function(categoryId) {
+                return this.products.filter(p => p.categoryId === categoryId);
+            },
+            
+            getProductsByManufacturer: function(manufacturerId) {
+                return this.products.filter(p => p.manufacturerId === manufacturerId);
+            },
+            
+            getExpiredProducts: function() {
+                return this.products.filter(p => p.isExpired());
+            },
+            
+            getExpiringSoonProducts: function(days = 7) {
+                return this.products.filter(p => !p.isExpired() && p.daysUntilExpiry() <= days);
+            },
+            
+            searchProducts: function(searchTerm) {
+                searchTerm = searchTerm.toLowerCase();
+                return this.products.filter(p => 
+                    p.name.toLowerCase().includes(searchTerm) || 
+                    p.description.toLowerCase().includes(searchTerm)
+                );
+            },
+            
+            addProduct: function(product) {
+                product.id = this.products.length > 0 ? Math.max(...this.products.map(p => p.id)) + 1 : 1;
+                product.createdAt = new Date();
+                product.updatedAt = new Date();
+                this.products.push(product);
+                return product;
+            },
+            
+            updateProduct: function(id, updatedProduct) {
+                const index = this.products.findIndex(p => p.id === id);
+                if (index !== -1) {
+                    updatedProduct.updatedAt = new Date();
+                    this.products[index] = { ...this.products[index], ...updatedProduct };
+                    return true;
+                }
+                return false;
+            },
+            
+            shipProduct: function(productId, quantity) {
+                const product = this.getProductById(productId);
+                if (!product) return false;
+                
+                if (product.quantity < quantity) {
+                    return false;
+                }
+                
+                product.quantity -= quantity;
+                product.updatedAt = new Date();
+                return true;
+            },
+            
+            // Методы для работы с категориями
+            getAllCategories: function() {
+                return this.categories;
+            },
+            
+            getCategoryById: function(id) {
+                return this.categories.find(c => c.id === id);
+            },
+            
+            addCategory: function(category) {
+                category.id = this.categories.length > 0 ? Math.max(...this.categories.map(c => c.id)) + 1 : 1;
+                category.createdAt = new Date();
+                category.updatedAt = new Date();
+                this.categories.push(category);
+                return category;
+            },
+            
+            // Методы для работы с производителями
+            getAllManufacturers: function() {
+                return this.manufacturers;
+            },
+            
+            getManufacturerById: function(id) {
+                return this.manufacturers.find(m => m.id === id);
+            },
+            
+            addManufacturer: function(manufacturer) {
+                manufacturer.id = this.manufacturers.length > 0 ? Math.max(...this.manufacturers.map(m => m.id)) + 1 : 1;
+                manufacturer.createdAt = new Date();
+                manufacturer.updatedAt = new Date();
+                this.manufacturers.push(manufacturer);
+                return manufacturer;
+            },
+            
+            // Методы для работы с поставщиками
+            getAllSuppliers: function() {
+                return this.suppliers;
+            },
+            
+            // Методы для работы с отгрузками
+            getAllShipments: function() {
+                return this.shipments;
+            },
+            
+            addShipment: function(shipment) {
+                shipment.id = this.shipments.length > 0 ? Math.max(...this.shipments.map(s => s.id)) + 1 : 1;
+                shipment.createdAt = new Date();
+                this.shipments.push(shipment);
+                return shipment;
+            }
+        };
+
+        // Инициализация базы данных с тестовыми данными
+        db.initSampleData();
+
+        // Глобальные переменные
+        let currentEditingId = null;
+        let deleteCallback = null;
+
+        // DOM элементы
+        const productSearchInput = document.getElementById('product-search');
+        const categoryFilterSelect = document.getElementById('category-filter');
+        const manufacturerFilterSelect = document.getElementById('manufacturer-filter');
+        const stockFilterSelect = document.getElementById('stock-filter');
+        const productsTable = document.getElementById('products-table');
+        const expiredProductsTable = document.getElementById('expired-products-table');
+        const categoriesTable = document.getElementById('categories-table');
+        const manufacturersTable = document.getElementById('manufacturers-table');
+        const suppliersTable = document.getElementById('suppliers-table');
+        const shipmentsTable = document.getElementById('shipments-table');
+        const expiringTable = document.getElementById('expiring-table').querySelector('tbody');
+        const recentShipmentsTable = document.getElementById('recent-shipments').querySelector('tbody');
+        
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', function() {
+            showDashboard();
+            
+            // Инициализация фильтров
+            populateFilters();
+            
+            // Обработчики событий
+            productSearchInput.addEventListener('input', filterProducts);
+            categoryFilterSelect.addEventListener('change', filterProducts);
+            manufacturerFilterSelect.addEventListener('change', filterProducts);
+            stockFilterSelect.addEventListener('change', filterProducts);
+            
+            // Инициализация даты в форме приема товара
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('product-production-date').value = today;
+            
+            // Инициализация даты в форме отгрузки
+            document.getElementById('shipment-date').value = today;
+        });
+
+        // Функции для работы с UI
+        function showContentSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            document.getElementById(sectionId).classList.remove('hidden');
+            
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            const sectionMap = {
+                'dashboard': 'Панель управления',
+                'products': 'Товары на складе',
+                'expired-products-section': 'Просроченные',
+                'categories': 'Категории',
+                'manufacturers': 'Производители',
+                'suppliers': 'Поставщики',
+                'shipments': 'Отгрузки'
+            };
+            
+            Array.from(document.querySelectorAll('.sidebar-link')).find(link => {
+                return link.textContent.trim() === sectionMap[sectionId];
+            })?.classList.add('active');
+            
+            switch(sectionId) {
+                case 'dashboard':
+                    updateDashboard();
+                    break;
+                case 'products':
+                    renderProductsTable();
+                    break;
+                case 'expired-products-section':
+                    renderExpiredProductsTable();
+                    break;
+                case 'categories':
+                    renderCategoriesTable();
+                    break;
+                case 'manufacturers':
+                    renderManufacturersTable();
+                    break;
+                case 'suppliers':
+                    renderSuppliersTable();
+                    break;
+                case 'shipments':
+                    renderShipmentsTable();
+                    break;
+            }
+        }
+
+        function showDashboard() {
+            showContentSection('dashboard');
+        }
+
+        function showProducts() {
+            showContentSection('products');
+        }
+
+        function showExpiredProducts() {
+            showContentSection('expired-products-section');
+        }
+
+        function showCategories() {
+            showContentSection('categories');
+        }
+
+        function showManufacturers() {
+            showContentSection('manufacturers');
+        }
+
+        function showSuppliers() {
+            showContentSection('suppliers');
+        }
+
+        function showShipments() {
+            showContentSection('shipments');
+        }
+
+        // Функции для заполнения фильтров
+        function populateFilters() {
+            // Категории
+            categoryFilterSelect.innerHTML = '<option value="">Все категории</option>';
+            document.getElementById('expired-category-filter').innerHTML = '<option value="">Все категории</option>';
+            db.getAllCategories().forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                categoryFilterSelect.appendChild(option.cloneNode(true));
+                document.getElementById('expired-category-filter').appendChild(option.cloneNode(true));
+                
+                // Для формы добавления/редактирования товара
+                const productCategoryOption = document.createElement('option');
+                productCategoryOption.value = category.id;
+                productCategoryOption.textContent = category.name;
+                document.getElementById('product-category').appendChild(productCategoryOption.cloneNode(true));
+            });
+            
+            // Производители
+            manufacturerFilterSelect.innerHTML = '<option value="">Все производители</option>';
+            db.getAllManufacturers().forEach(manufacturer => {
+                const option = document.createElement('option');
+                option.value = manufacturer.id;
+                option.textContent = manufacturer.name;
+                manufacturerFilterSelect.appendChild(option);
+                
+                // Для формы добавления товара
+                const productManufacturerOption = document.createElement('option');
+                productManufacturerOption.value = manufacturer.id;
+                productManufacturerOption.textContent = manufacturer.name;
+                document.getElementById('product-manufacturer').appendChild(productManufacturerOption);
+            });
+            
+            // Товары для отгрузки
+            const shipmentProductSelect = document.getElementById('shipment-product');
+            shipmentProductSelect.innerHTML = '<option value="">Выберите товар</option>';
+            db.getAllProducts().forEach(product => {
+                if (product.quantity > 0) {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = `${product.name} (${product.quantity} шт.)`;
+                    shipmentProductSelect.appendChild(option);
+                }
+            });
+        }
+
+        // Функции для работы с товарами
+        function renderProductsTable(products = db.getAllProducts()) {
+            productsTable.innerHTML = '';
+            
+            if (products.length === 0) {
+                productsTable.innerHTML = '<tr><td colspan="7" class="py-4 text-center text-gray-500">Товары не найдены</td></tr>';
+                return;
+            }
+            
+            products.forEach(product => {
+                const category = db.getCategoryById(product.categoryId);
+                const manufacturer = db.getManufacturerById(product.manufacturerId);
+                const expiryDate = product.expiryDate.toISOString().split('T')[0];
+                const daysLeft = product.daysUntilExpiry();
+                
+                // Определяем CSS класс для строки в зависимости от срока годности
+                let rowClass = '';
+                if (product.isExpired()) {
+                    rowClass = 'expired';
+                } else if (daysLeft <= 7) {
+                    rowClass = 'expiring-soon';
+                }
+                
+                // Определяем статус количества
+                let quantityStatus = '';
+                if (product.quantity > 10) {
+                    quantityStatus = '<span class="text-green-600">В наличии</span>';
+                } else if (product.quantity > 0) {
+                    quantityStatus = '<span class="text-yellow-600">Заканчивается</span>';
+                } else {
+                    quantityStatus = '<span class="text-red-600">Нет в наличии</span>';
+                }
+                
+                const row = document.createElement('tr');
+                row.className = `hover:bg-gray-50 ${rowClass}`;
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${product.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${category ? category.name : '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${manufacturer ? manufacturer.name : '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${expiryDate} (${daysLeft > 0 ? daysLeft + ' дн.' : 'просрочено'})</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${product.quantity}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${product.price.toFixed(2)} ₽</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <button onclick="editProduct(${product.id})" class="text-yellow-600 hover:text-yellow-900">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                            <button onclick="confirmDelete(${product.id}, 'товар', deleteProduct)" class="text-red-600 hover:text-red-900">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                productsTable.appendChild(row);
+            });
+        }
+
+        function renderExpiredProductsTable() {
+            const expiredProducts = db.getExpiredProducts();
+            expiredProductsTable.innerHTML = '';
+            
+            if (expiredProducts.length === 0) {
+                expiredProductsTable.innerHTML = '<tr><td colspan="8" class="py-4 text-center text-gray-500">Просроченные товары не найдены</td></tr>';
+                return;
+            }
+            
+            expiredProducts.forEach(product => {
+                const category = db.getCategoryById(product.categoryId);
+                const manufacturer = db.getManufacturerById(product.manufacturerId);
+                const productionDate = product.productionDate.toISOString().split('T')[0];
+                const expiryDate = product.expiryDate.toISOString().split('T')[0];
+                const daysExpired = Math.abs(product.daysUntilExpiry());
+                
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 expired';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${product.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${category ? category.name : '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${manufacturer ? manufacturer.name : '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${productionDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${expiryDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${product.quantity}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${daysExpired}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="confirmDelete(${product.id}, 'просроченный товар', deleteProduct)" class="text-red-600 hover:text-red-900">
+                            Списать
+                        </button>
+                    </td>
+                `;
+                
+                expiredProductsTable.appendChild(row);
+            });
+        }
+
+        function filterProducts() {
+            const searchTerm = productSearchInput.value.toLowerCase();
+            const categoryId = categoryFilterSelect.value ? parseInt(categoryFilterSelect.value) : null;
+            const manufacturerId = manufacturerFilterSelect.value ? parseInt(manufacturerFilterSelect.value) : null;
+            const stockStatus = stockFilterSelect.value;
+            
+            let filteredProducts = db.getAllProducts();
+            
+            if (searchTerm) {
+                filteredProducts = filteredProducts.filter(p => 
+                    p.name.toLowerCase().includes(searchTerm) || 
+                    p.description.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            if (categoryId) {
+                filteredProducts = filteredProducts.filter(p => p.categoryId === categoryId);
+            }
+            
+            if (manufacturerId) {
+                filteredProducts = filteredProducts.filter(p => p.manufacturerId === manufacturerId);
+            }
+            
+            if (stockStatus) {
+                switch(stockStatus) {
+                    case 'in-stock':
+                        filteredProducts = filteredProducts.filter(p => p.quantity > 10);
+                        break;
+                    case 'low-stock':
+                        filteredProducts = filteredProducts.filter(p => p.quantity > 0 && p.quantity <= 10);
+                        break;
+                    case 'out-of-stock':
+                        filteredProducts = filteredProducts.filter(p => p.quantity === 0);
+                        break;
+                }
+            }
+            
+            renderProductsTable(filteredProducts);
+        }
+
+        // Функции для работы с dashboard
+        function updateDashboard() {
+            const products = db.getAllProducts();
+            const shipments = db.getAllShipments();
+            
+            // Общее количество товаров
+            document.getElementById('total-products').textContent = products.length;
+            
+            // Товары на складе (количество > 0)
+            document.getElementById('in-stock').textContent = products.filter(p => p.quantity > 0).length;
+            
+            // Товары, которые заканчиваются (количество <= 10)
+            document.getElementById('low-stock').textContent = products.filter(p => p.quantity > 0 && p.quantity <= 10).length;
+            
+            // Просроченные товары
+            document.getElementById('expired-products').textContent = db.getExpiredProducts().length;
+            
+            // Товары с истекающим сроком годности (7 дней или меньше)
+            renderExpiringTable(db.getExpiringSoonProducts(7));
+            
+            // Последние отгрузки (первые 5)
+            renderRecentShipments(shipments.slice(0, 5));
+        }
+
+        function renderExpiringTable(products) {
+            expiringTable.innerHTML = '';
+            
+            if (products.length === 0) {
+                expiringTable.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-gray-500">Нет товаров с истекающим сроком годности</td></tr>';
+                return;
+            }
+            
+            products.forEach(product => {
+                const manufacturer = db.getManufacturerById(product.manufacturerId);
+                const daysLeft = product.daysUntilExpiry();
+                const expiryDate = product.expiryDate.toISOString().split('T')[0];
+                
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 expiring-soon';
+                row.innerHTML = `
+                    <td class="py-2 px-4 border-b border-gray-200">${product.name}</td>
+                    <td class="py-2 px-4 border-b border-gray-200">${manufacturer ? manufacturer.name : '-'}</td>
+                    <td class="py-2 px-4 border-b border-gray-200">${product.quantity}</td>
+                    <td class="py-2 px-4 border-b border-gray-200">${expiryDate}</td>
+                    <td class="py-2 px-4 border-b border-gray-200">${daysLeft}</td>
+                `;
+                
+                expiringTable.appendChild(row);
+            });
+        }
+
+        function renderRecentShipments(shipments) {
+            recentShipmentsTable.innerHTML = '';
+            
+            if (shipments.length === 0) {
+                recentShipmentsTable.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-gray-500">Нет данных об отгрузках</td></tr>';
+                return;
+            }
+            
+            shipments.forEach(shipment => {
+                const product = db.getProductById(shipment.productId);
+                const date = shipment.date.toISOString().split('T')[0];
+                
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="py-2 px-4 border-b border-gray-200">${date}</td>
+                    <td class="py-2 px-4 border-b border-gray-200">${product ? product.name : 'Неизвестный товар'}</td>
+                    <td class="py-2 px-4 border-b border-gray-200">${shipment.quantity}</td>
+                    <td class="py-2 px-4 border-b border-gray-200">${shipment.recipient}</td>
+                `;
+                
+                recentShipmentsTable.appendChild(row);
+            });
+        }
+
+        // Функции для работы с категориями
+        function renderCategoriesTable() {
+            categoriesTable.innerHTML = '';
+            
+            const categories = db.getAllCategories();
+            
+            if (categories.length === 0) {
+                categoriesTable.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-gray-500">Категории не найдены</td></tr>';
+                return;
+            }
+            
+            categories.forEach(category => {
+                const productsCount = db.getProductsByCategory(category.id).length;
+                
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${category.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${category.description || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${productsCount}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <button onclick="editCategory(${category.id})" class="text-yellow-600 hover:text-yellow-900">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                            <button onclick="confirmDelete(${category.id}, 'категорию', deleteCategory)" class="text-red-600 hover:text-red-900">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                categoriesTable.appendChild(row);
+            });
+        }
+
+        // Функции для работы с производителями
+        function renderManufacturersTable() {
+            manufacturersTable.innerHTML = '';
+            
+            const manufacturers = db.getAllManufacturers();
+            
+            if (manufacturers.length === 0) {
+                manufacturersTable.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-gray-500">Производители не найдены</td></tr>';
+                return;
+            }
+            
+            manufacturers.forEach(manufacturer => {
+                const productsCount = db.getProductsByManufacturer(manufacturer.id).length;
+                
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${manufacturer.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${manufacturer.country}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${manufacturer.email}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${productsCount}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <button onclick="editManufacturer(${manufacturer.id})" class="text-yellow-600 hover:text-yellow-900">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-
