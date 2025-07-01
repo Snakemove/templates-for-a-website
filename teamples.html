@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Складской учет товаров</title>
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #166088;
+            --accent: #4fc3dc;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --danger: #dc3545;
+            --success: #28a745;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px 0;
+            margin-bottom: 30px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            background-color: var(--light);
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            flex: 1;
+        }
+        
+        .tab.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .tab:hover:not(.active) {
+            background-color: #e9ecef;
+        }
+        
+        .tab-content {
+            display: none;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: var(--secondary);
+        }
+        
+        button.danger {
+            background-color: var(--danger);
+        }
+        
+        button.success {
+            background-color: var(--success);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .status-expired {
+            color: var(--danger);
+            font-weight: bold;
+        }
+        
+        .search-container {
+            margin-bottom: 20px;
+        }
+        
+        .search-input {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+        }
+        
+        .search-button {
+            padding: 10px 15px;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .alert {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .table-responsive {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo">Система складского учета</div>
+                <div id="current-date"></div>
+            </div>
+        </header>
+        
+        <div class="nav-tabs">
+            <div class="tab active" data-tab="products">Товары</div>
+            <div class="tab" data-tab="categories">Категории</div>
+            <div class="tab" data-tab="manufacturers">Производители</div>
+            <div class="tab" data-tab="suppliers">Поставщики</div>
+            <div class="tab" data-tab="expired">Просроченные</div>
+        </div>
+        
+        <div id="alert-message" class="alert" style="display: none;"></div>
+        
+        <!-- Товары -->
+        <div id="products" class="tab-content active">
+            <div class="search-container">
+                <input type="text" id="product-search" class="search-input" placeholder="Поиск товаров...">
+                <button class="search-button" onclick="searchProducts()">Найти</button>
+                <button onclick="resetSearch()" style="margin-left: 10px;">Сброс</button>
+            </div>
+            
+            <button onclick="showAddProductForm()">Добавить товар</button>
+            
+            <div id="product-form" style="display: none; margin-top: 20px;">
+                <h3 id="form-title">Добавить новый товар</h3>
+                <div class="form-group">
+                    <label for="product-name">Название товара</label>
+                    <input type="text" id="product-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-category">Категория</label>
+                    <select id="product-category" required>
+                        <option value="">Выберите категорию</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="product-manufacturer">Производитель</label>
+                    <select id="product-manufacturer" required>
+                        <option value="">Выберите производителя</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="product-supplier">Поставщик</label>
+                    <select id="product-supplier" required>
+                        <option value="">Выберите поставщика</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="product-quantity">Количество</label>
+                    <input type="number" id="product-quantity" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-price">Цена за единицу</label>
+                    <input type="number" id="product-price" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-expiry">Срок годности</label>
+                    <input type="date" id="product-expiry" required>
+                </div>
+                <div class="btn-group">
+                    <button id="save-product" class="success">Сохранить</button>
+                    <button onclick="hideProductForm()">Отмена</button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table id="products-table">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Категория</th>
+                            <th>Производитель</th>
+                            <th>Поставщик</th>
+                            <th>Кол-во</th>
+                            <th>Цена</th>
+                            <th>Срок годности</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-list">
+                        <!-- Товары будут добавлены через JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Категории -->
+        <div id="categories" class="tab-content">
+            <button onclick="showAddCategoryForm()">Добавить категорию</button>
+            
+            <div id="category-form" style="display: none; margin-top: 20px;">
+                <h3 id="category-form-title">Добавить новую категорию</h3>
+                <div class="form-group">
+                    <label for="category-name">Название категории</label>
+                    <input type="text" id="category-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="category-description">Описание</label>
+                    <input type="text" id="category-description">
+                </div>
+                <div class="btn-group">
+                    <button id="save-category" class="success">Сохранить</button>
+                    <button onclick="hideCategoryForm()">Отмена</button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table id="categories-table">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Описание</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categories-list">
+                        <!-- Категории будут добавлены через JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Производители -->
+        <div id="manufacturers" class="tab-content">
+            <button onclick="showAddManufacturerForm()">Добавить производителя</button>
+            
+            <div id="manufacturer-form" style="display: none; margin-top: 20px;">
+                <h3 id="manufacturer-form-title">Добавить нового производителя</h3>
+                <div class="form-group">
+                    <label for="manufacturer-name">Название</label>
+                    <input type="text" id="manufacturer-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="manufacturer-country">Страна</label>
+                    <input type="text" id="manufacturer-country" required>
+                </div>
+                <div class="form-group">
+                    <label for="manufacturer-address">Адрес</label>
+                    <input type="text" id="manufacturer-address">
+                </div>
+                <div class="form-group">
+                    <label for="manufacturer-phone">Телефон</label>
+                    <input type="text" id="manufacturer-phone">
+                </div>
+                <div class="btn-group">
+                    <button id="save-manufacturer" class="success">Сохранить</button>
+                    <button onclick="hideManufacturerForm()">Отмена</button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table id="manufacturers-table">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Страна</th>
+                            <th>Адрес</th>
+                            <th>Телефон</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="manufacturers-list">
+                        <!-- Производители будут добавлены через JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Поставщики -->
+        <div id="suppliers" class="tab-content">
+            <button onclick="showAddSupplierForm()">Добавить поставщика</button>
+            
+            <div id="supplier-form" style="display: none; margin-top: 20px;">
+                <h3 id="supplier-form-title">Добавить нового поставщика</h3>
+                <div class="form-group">
+                    <label for="supplier-name">Название</label>
+                    <input type="text" id="supplier-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="supplier-contact">Контактное лицо</label>
+                    <input type="text" id="supplier-contact" required>
+                </div>
+                <div class="form-group">
+                    <label for="supplier-phone">Телефон</label>
+                    <input type="text" id="supplier-phone" required>
+                </div>
+                <div class="form-group">
+                    <label for="supplier-email">Email</label>
+                    <input type="email" id="supplier-email">
+                </div>
+                <div class="btn-group">
+                    <button id="save-supplier" class="success">Сохранить</button>
+                    <button onclick="hideSupplierForm()">Отмена</button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table id="suppliers-table">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Контакт</th>
+                            <th>Телефон</th>
+                            <th>Email</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="suppliers-list">
+                        <!-- Поставщики будут добавлены через JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Просроченные товары -->
+        <div id="expired" class="tab-content">
+            <h3>Товары с истекшим сроком годности</h3>
+            <button onclick="renderExpiredProducts()">Обновить список</button>
+            <div class="table-responsive">
+                <table id="expired-table">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Категория</th>
+                            <th>Производитель</th>
+                            <th>Кол-во</th>
+                            <th>Срок годности</th>
+                            <th>Дней просрочено</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expired-list">
+                        <!-- Просроченные товары будут добавлены через JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация данных
+        let products = [];
+        let categories = [];
+        let manufacturers = [];
+        let suppliers = [];
+        let editingId = null;
+        
+        // DOM элементы
+        const alertMessage = document.getElementById('alert-message');
+        const currentDateElement = document.getElementById('current-date');
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Установка текущей даты
+            updateCurrentDate();
+            setInterval(updateCurrentDate, 60000); // Обновлять каждую минуту
+            
+            // Загрузка тестовых данных
+            loadTestData();
+            
+            // Инициализация вкладок
+            initTabs();
+            
+            // Инициализация обработчиков событий
+            initEventHandlers();
+            
+            // Отображение данных
+            renderAllData();
+        });
+        
+        function updateCurrentDate() {
+            const now = new Date();
+            currentDateElement.textContent = now.toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        function loadTestData() {
+            // Тестовые категории
+            categories = [
+                { id: 1, name: "Молочные продукты", description: "Молоко, сыр, йогурт и др." },
+                { id: 2, name: "Хлебобулочные изделия", description: "Хлеб, булки, пирожные" },
+                { id: 3, name: "Бакалея", description: "Крупы, макароны, специи" }
+            ];
+            
+            // Тестовые производители
+            manufacturers = [
+                { id: 1, name: "Молочный комбинат №1", country: "Россия", address: "г. Москва, ул. Молочная, 1", phone: "+7 (495) 111-22-33" },
+                { id: 2, name: "Хлебозавод №5", country: "Россия", address: "г. Санкт-Петербург, пр. Хлебный, 15", phone: "+7 (812) 222-33-44" },
+                { id: 3, name: "БакалеяТрейд", country: "Россия", address: "г. Казань, ул. Бакалейная, 8", phone: "+7 (843) 333-44-55" }
+            ];
+            
+            // Тестовые поставщики
+            suppliers = [
+                { id: 1, name: "Молочные поставки", contact: "Иванов И.И.", phone: "+7 (495) 444-55-66", email: "milk@example.com" },
+                { id: 2, name: "Хлебные традиции", contact: "Петров П.П.", phone: "+7 (812) 555-66-77", email: "bread@example.com" },
+                { id: 3, name: "Бакалейный мир", contact: "Сидоров С.С.", phone: "+7 (843) 666-77-88", email: "bakaleya@example.com" }
+            ];
+            
+            // Тестовые товары
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            
+            const nextWeek = new Date(today);
+            nextWeek.setDate(today.getDate() + 7);
+            
+            const lastMonth = new Date(today);
+            lastMonth.setMonth(today.getMonth() - 1);
+            
+            products = [
+                { 
+                    id: 1, 
+                    name: "Молоко 'Домик в деревне' 2.5%", 
+                    categoryId: 1, 
+                    manufacturerId: 1, 
+                    supplierId: 1, 
+                    quantity: 50, 
+                    price: 65.50, 
+                    expiry: nextWeek.toISOString().split('T')[0] 
+                },
+                { 
+                    id: 2, 
+                    name: "Хлеб белый нарезной", 
+                    categoryId: 2, 
+                    manufacturerId: 2, 
+                    supplierId: 2, 
+                    quantity: 30, 
+                    price: 45.00, 
+                    expiry: yesterday.toISOString().split('T')[0] 
+                },
+                { 
+                    id: 3, 
+                    name: "Гречневая крупа", 
+                    categoryId: 3, 
+                    manufacturerId: 3, 
+                    supplierId: 3, 
+                    quantity: 20, 
+                    price: 89.90, 
+                    expiry: nextWeek.toISOString().split('T')[0] 
+                },
+                { 
+                    id: 4, 
+                    name: "Йогурт фруктовый", 
+                    categoryId: 1, 
+                    manufacturerId: 1, 
+                    supplierId: 1, 
+                    quantity: 15, 
+                    price: 32.75, 
+                    expiry: lastMonth.toISOString().split('T')[0] 
+                }
+            ];
+        }
+        
+        function initTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Удалить active у всех вкладок и контента
+                    tabs.forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Добавить active текущей вкладке и соответствующему контенту
+                    this.classList.add('active');
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+        
+        function initEventHandlers() {
+            // Обработчики для товаров
+            document.getElementById('save-product').addEventListener('click', saveProduct);
+            
+            // Обработчики для категорий
+            document.getElementById('save-category').addEventListener('click', saveCategory);
+            
+            // Обработчики для производителей
+            document.getElementById('save-manufacturer').addEventListener('click', saveManufacturer);
+            
+            // Обработчики для поставщиков
+            document.getElementById('save-supplier').addEventListener('click', saveSupplier);
+        }
+        
+        function renderAllData() {
+            renderProducts();
+            renderCategories();
+            renderManufacturers();
+            renderSuppliers();
+            renderExpiredProducts();
+            
+            // Заполнить выпадающие списки
+            populateCategoryDropdown();
+            populateManufacturerDropdown();
+            populateSupplierDropdown();
+        }
+        
+        // ========== Общиe функции ==========
+        function showAlert(message, type) {
+            alertMessage.textContent = message;
+            alertMessage.className = `alert alert-${type}`;
+            alertMessage.style.display = 'block';
+            
+            // Скрыть сообщение через 5 секунд
+            setTimeout(() => {
+                alertMessage.style.display = 'none';
+            }, 5000);
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ru-RU');
+        }
+        
+        function getCategoryById(id) {
+            return categories.find(c => c.id === id);
+        }
+        
+        function getManufacturerById(id) {
+            return manufacturers.find(m => m.id === id);
+        }
+        
+        function getSupplierById(id) {
+            return suppliers.find(s => s.id === id);
+        }
+        
+        function populateCategoryDropdown() {
+            const dropdown = document.getElementById('product-category');
+            dropdown.innerHTML = '<option value="">Выберите категорию</option>';
+            
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                dropdown.appendChild(option);
+            });
+        }
+        
+        function populateManufacturerDropdown() {
+            const dropdown = document.getElementById('product-manufacturer');
+            dropdown.innerHTML = '<option value="">Выберите производителя</option>';
+            
+            manufacturers.forEach(manufacturer => {
+                const option = document.createElement('option');
+                option.value = manufacturer.id;
+                option.textContent = manufacturer.name;
+                dropdown.appendChild(option);
+            });
+        }
+        
+        function populateSupplierDropdown() {
+            const dropdown = document.getElementById('product-supplier');
+            dropdown.innerHTML = '<option value="">Выберите поставщика</option>';
+            
+            suppliers.forEach(supplier => {
+                const option = document.createElement('option');
+                option.value = supplier.id;
+                option.textContent = supplier.name;
+                dropdown.appendChild(option);
+            });
+        }
+        
+        // ========== Функции для работы с товарами ==========
+        function renderProducts(filteredProducts) {
+            const productsList = document.getElementById('products-list');
+            productsList.innerHTML = '';
+            
+            const productsToRender = filteredProducts || products;
+            
+            productsToRender.forEach(product => {
+                const category = getCategoryById(product.categoryId);
+                const manufacturer = getManufacturerById(product.manufacturerId);
+                const supplier = getSupplierById(product.supplierId);
+                
+                const row = document.createElement('tr');
+                
+                // Проверка просроченности
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const expiryDate = new Date(product.expiry);
+                const isExpired = expiryDate < today;
+                
+                row.innerHTML = `
+                    <td>${product.name}</td>
+                    <td>${category ? category.name : 'Неизвестно'}</td>
+                    <td>${manufacturer ? manufacturer.name : 'Неизвестно'}</td>
+                    <td>${supplier ? supplier.name : 'Неизвестно'}</td>
+                    <td>${product.quantity}</td>
+                    <td>${product.price.toFixed(2)} ₽</td>
+                    <td class="${isExpired ? 'status-expired' : ''}">${formatDate(product.expiry)}</td>
+                    <td>
+                        <button onclick="editProduct(${product.id})">Изменить</button>
+                        <button onclick="deleteProduct(${product.id})" class="danger">Удалить</button>
+                        <button onclick="shipProduct(${product.id})">Отгрузить</button>
+                    </td>
+                `;
+                
+                productsList.appendChild(row);
+            });
+        }
+        
+        function showAddProductForm() {
+            document.getElementById('form-title').textContent = 'Добавить новый товар';
+            document.getElementById('product-form').style.display = 'block';
+            editingId = null;
+            
+            // Очистить форму
+            document.getElementById('product-name').value = '';
+            document.getElementById('product-category').value = '';
+            document.getElementById('product-manufacturer').value = '';
+            document.getElementById('product-supplier').value = '';
+            document.getElementById('product-quantity').value = '';
+            document.getElementById('product-price').value = '';
+            
+            // Установить текущую дату + 7 дней по умолчанию
+            const today = new Date();
+            today.setDate(today.getDate() + 7);
+            document.getElementById('product-expiry').value = today.toISOString().split('T')[0];
+            
+            // Фокус на первое поле
+            document.getElementById('product-name').focus();
+        }
+        
+        function hideProductForm() {
+            document.getElementById('product-form').style.display = 'none';
+        }
+        
+        function saveProduct() {
+            const name = document.getElementById('product-name').value;
+            const categoryId = parseInt(document.getElementById('product-category').value);
+            const manufacturerId = parseInt(document.getElementById('product-manufacturer').value);
+            const supplierId = parseInt(document.getElementById('product-supplier').value);
+            const quantity = parseInt(document.getElementById('product-quantity').value);
+            const price = parseFloat(document.getElementById('product-price').value);
+            const expiry = document.getElementById('product-expiry').value;
+            
+            // Валидация
+            if (!name || !categoryId || !manufacturerId || !supplierId || isNaN(quantity) || isNaN(price) || !expiry) {
+                showAlert('Пожалуйста, заполните все обязательные поля', 'danger');
+                return;
+            }
+            
+            if (quantity <= 0) {
+                showAlert('Количество должно быть положительным числом', 'danger');
+                return;
+            }
+            
+            if (price <= 0) {
+                showAlert('Цена должна быть положительным числом', 'danger');
+                return;
+            }
+            
+            if (editingId !== null) {
+                // Редактирование существующего товара
+                const index = products.findIndex(p => p.id === editingId);
+                if (index !== -1) {
+                    products[index] = {
+                        id: editingId,
+                        name,
+                        categoryId,
+                        manufacturerId,
+                        supplierId,
+                        quantity,
+                        price,
+                        expiry
+                    };
+                    showAlert('Товар успешно обновлен', 'success');
+                }
+            } else {
+                // Добавление нового товара
+                const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+                products.push({
+                    id: newId,
+                    name,
+                    categoryId,
+                    manufacturerId,
+                    supplierId,
+                    quantity,
+                    price,
+                    expiry
+                });
+                showAlert('Товар успешно добавлен', 'success');
+            }
+            
+            hideProductForm();
+            renderProducts();
+            renderExpiredProducts();
+        }
+        
+        function editProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            
+            document.getElementById('form-title').textContent = 'Изменить товар';
+            document.getElementById('product-form').style.display = 'block';
+            editingId = id;
+            
+            document.getElementById('product-name').value = product.name;
+            document.getElementById('product-category').value = product.categoryId;
+            document.getElementById('product-manufacturer').value = product.manufacturerId;
+            document.getElementById('product-supplier').value = product.supplierId;
+            document.getElementById('product-quantity').value = product.quantity;
+            document.getElementById('product-price').value = product.price;
+            document.getElementById('product-expiry').value = product.expiry;
+            
+            document.getElementById('product-name').focus();
+        }
+        
+        function deleteProduct(id) {
+            if (confirm('Вы уверены, что хотите удалить этот товар?')) {
+                products = products.filter(p => p.id !== id);
+                showAlert('Товар успешно удален', 'success');
+                renderProducts();
+                renderExpiredProducts();
+            }
+        }
+        
+        function shipProduct(id) {
+            const quantityToShip = prompt('Введите количество товара для отгрузки:', '1');
+            if (!quantityToShip) return;
+            
+            const quantity = parseInt(quantityToShip);
+            if (isNaN(quantity) || quantity <= 0) {
+                showAlert('Количество должно быть положительным числом', 'danger');
+                return;
+            }
+            
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            
+            
+            if (product.quantity < quantity) {
+                showAlert(`Недостаточно товара на складе. Доступно: ${product.quantity}`, 'danger');
+                return;
+            }
+            
+            product.quantity -= quantity;
+            showAlert(`Отгружено ${quantity} единиц товара "${product.name}"`, 'success');
+            renderProducts();
+            renderExpiredProducts();
+        }
+        
+        function searchProducts() {
+            const searchTerm = document.getElementById('product-search').value.toLowerCase();
+            if (!searchTerm) {
+                renderProducts();
+                return;
+            }
+            
+            const filtered = products.filter(product => 
+                product.name.toLowerCase().includes(searchTerm) ||
+                (getCategoryById(product.categoryId)?.name.toLowerCase().includes(searchTerm) ?? false) ||
+                (getManufacturerById(product.manufacturerId)?.name.toLowerCase().includes(searchTerm) ?? false) ||
+                (getSupplierById(product.supplierId)?.name.toLowerCase().includes(searchTerm) ?? false)
+            );
+            
+            if (filtered.length === 0) {
+                showAlert('Товары не найдены', 'danger');
+                return;
+            }
+            
+            renderProducts(filtered);
+        }
+        
+        function resetSearch() {
+            document.getElementById('product-search').value = '';
+            renderProducts();
+        }
+        
+        // ========== Функции для работы с категориями ==========
+        function renderCategories() {
+            const categoriesList = document.getElementById('categories-list');
+            categoriesList.innerHTML = '';
+            
+            categories.forEach(category => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${category.name}</td>
+                    <td>${category.description || 'Нет описания'}</td>
+                    <td>
+                        <button onclick="editCategory(${category.id})">Изменить</button>
+                        <button onclick="deleteCategory(${category.id})" class="danger">Удалить</button>
+                    </td>
+                `;
+                categoriesList.appendChild(row);
+            });
+        }
+        
+        function showAddCategoryForm() {
+            document.getElementById('category-form-title').textContent = 'Добавить новую категорию';
+            document.getElementById('category-form').style.display = 'block';
+            editingId = null;            
+            // Очистить форму
+            document.getElementById('category-name').value = '';
+            document.getElementById('category-description').value = '';
+            
+            document.getElementById('category-name').focus();
+        }
+        
+        function hideCategoryForm() {
+            document.getElementById('category-form').style.display = 'none';
+        }
+        
+        function saveCategory() {
+            const name = document.getElementById('category-name').value;
+            const description = document.getElementById('category-description').value;
+            
+            if (!name) {
+                showAlert('Название категории обязательно', 'danger');
+                return;
+            }
+            
+            if (editingId !== null) {
+                // Редактирование существующей категории
+                const index = categories.findIndex(c => c.id === editingId);
+                if (index !== -1) {
+                    categories[index] = {
+                        id: editingId,
+                        name,
+                        description
+                    };
+                    showAlert('Категория успешно обновлена', 'success');
+                }
+            } else {
+                // Добавление новой категории
+                const newId = categories.length > 0 ? Math.max(...categories.map(c => c.id)) + 1 : 1;
+                categories.push({
+                    id: newId,
+                    name,
+                    description
+                });
+                showAlert('Категория успешно добавлена', 'success');
+            }
+            
+            hideCategoryForm();
+            renderCategories();
+            populateCategoryDropdown();
+        }
+        
+        function editCategory(id) {
+            const category = categories.find(c => c.id === id);
+            if (!category) return;            
+            
+            document.getElementById('category-form-title').textContent = 'Изменить категорию';
+            document.getElementById('category-form').style.display = 'block';
+            editingId = id;
+            
+            document.getElementById('category-name').value = category.name;
+            document.getElementById('category-description').value = category.description || '';
+            
+            document.getElementById('category-name').focus();
+        }
+        
+        function deleteCategory(id) {
+            // Проверить, используется ли категория в товарах
+            const isUsed = products.some(p => p.categoryId === id);
+            
+            if (isUsed) {
+                showAlert('Невозможно удалить категорию, так как она используется в товарах', 'danger');
+                return;
+            }
+            
+            if (confirm('Вы уверены, что хотите удалить эту категорию?')) {
+                categories = categories.filter(c => c.id !== id);
+                showAlert('Категория успешно удалена', 'success');
+                renderCategories();
+                populateCategoryDropdown();
+            }
+        }
+        
+        // ========== Функции для работы с производителями ==========
+        function renderManufacturers() {
+            const manufacturersList = document.getElementById('manufacturers-list');
+            manufacturersList.innerHTML = '';
+            
+            manufacturers.forEach(manufacturer => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${manufacturer.name}</td>
+                    <td>${manufacturer.country}</td>
+                    <td>${manufacturer.address || '-'}</td>
+                    <td>${manufacturer.phone || '-'}</td>
+                    <td>
+                        <button onclick="editManufacturer(${manufacturer.id})">Изменить</button>
+                        <button onclick="deleteManufacturer(${manufacturer.id})" class="danger">Удалить</button>
+                    </td>
+                `;
+                manufacturersList.appendChild(row);
+            });
+        }
+        
+        function showAddManufacturerForm() {
+            document.getElementById('manufacturer-form-title').textContent = 'Добавить нового производителя';
+            document.getElementById('manufacturer-form').style.display = 'block';
+            editingId = null;
+            
+            // Очистить форму
+            document.getElementById('manufacturer-name').value = '';
+            document.getElementById('manufacturer-country').value = '';
+            document.getElementById('manufacturer-address').value = '';
+            document.getElementById('manufacturer-phone').value = '';
+            
+            document.getElementById('manufacturer-name').focus();
+        }
+        
+        function hideManufacturerForm() {
+            document.getElementById('manufacturer-form').style.display = 'none';
+        }
+        
+        function saveManufacturer() {
+            const name = document.getElementById('manufacturer-name').value;
+            const country = document.getElementById('manufacturer-country').value;
+            const address = document.getElementById('manufacturer-address').value;
+            const phone = document.getElementById('manufacturer-phone').value;
+            
+            if (!name || !country) {
+                showAlert('Название и страна производителя обязательны', 'danger');
+                return;
+            }
+            
+            if (editingId !== null) {
+                // Редактирование существующего производителя
+                const index = manufacturers.findIndex(m => m.id === editingId);
+                if (index !== -1) {
+                    manufacturers[index] = {
+                        id: editingId,
+                        name,
+                        country,
+                        address,
+                        phone
+                    };
+                    showAlert('Производитель успешно обновлен', 'success');
+                }
+            } else {
+                // Добавление нового производителя
+                const newId = manufacturers.length > 0 ? Math.max(...manufacturers.map(m => m.id)) + 1 : 1;
+                manufacturers.push({
+                    id: newId,
+                    name,
+                    country,
+                    address,
+                    phone
+                });
+                showAlert('Производитель успешно добавлен', 'success');
+            }
+            
+            hideManufacturerForm();
+            renderManufacturers();
+            populateManufacturerDropdown();
+        }
+        
+        function editManufacturer(id) {
+            const manufacturer = manufacturers.find(m => m.id === id);
+            if (!manufacturer) return;
+            
+            document.getElementById('manufacturer-form-title').textContent = 'Изменить производителя';
+            document.getElementById('manufacturer-form').style.display = 'block';
+            editingId = id;
+            
+            document.getElementById('manufacturer-name').value = manufacturer.name;
+            document.getElementById('manufacturer-country').value = manufacturer.country;
+            document.getElementById('manufacturer-address').value = manufacturer.address || '';
+            document.getElementById('manufacturer-phone').value = manufacturer.phone || '';
+            
+            document.getElementById('manufacturer-name').focus();
+        }
+        
+        function deleteManufacturer(id) {
+            // Проверить, используется ли производитель в товарах
+            const isUsed = products.some(p => p.manufacturerId === id);
+            
+            if (isUsed) {
+                showAlert('Невозможно удалить производителя, так как он используется в товарах', 'danger');
+                return;
+            }
+            
+            if (confirm('Вы уверены, что хотите удалить этого производителя?')) {
+                manufacturers = manufacturers.filter(m => m.id !== id);
+                showAlert('Производитель успешно удален', 'success');
+                renderManufacturers();
+                populateManufacturerDropdown();
+            }
+        }
+        
+        // ========== Функции для работы с поставщиками ==========
+        function renderSuppliers() {
+            const suppliersList = document.getElementById('suppliers-list');
+            suppliersList.innerHTML = '';
+            
+            suppliers.forEach(supplier => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${supplier.name}</td>
+                    <td>${supplier.contact}</td>
+                    <td>${supplier.phone}</td>
+                    <td>${supplier.email || '-'}</td>
+                    <td>
+                        <button onclick="editSupplier(${supplier.id})">Изменить</button>
+                        <button onclick="deleteSupplier(${supplier.id})" class="danger">Удалить</button>
+                    </td>
+                `;
+                suppliersList.appendChild(row);
+            });
+        }
+        
+        function showAddSupplierForm() {
+            document.getElementById('supplier-form-title').textContent = 'Добавить нового поставщика';
+            document.getElementById('supplier-form').style.display = 'block';
+            editingId = null;
+            
+            // Очистить форму
+            document.getElementById('supplier-name').value = '';
+            document.getElementById('supplier-contact').value = '';
+            document.getElementById('supplier-phone').value = '';
+            document.getElementById('supplier-email').value = '';
+            
+            document.getElementById('supplier-name').focus();
+        }
+        
+        function hideSupplierForm() {
+            document.getElementById('supplier-form').style.display = 'none';
+        }
+        
+        function saveSupplier() {
+            const name = document.getElementById('supplier-name').value;
+            const contact = document.getElementById('supplier-contact').value;
+            const phone = document.getElementById('supplier-phone').value;
+            const email = document.getElementById('supplier-email').value;
+            
+            if (!name || !contact || !phone) {
+                showAlert('Название, контактное лицо и телефон поставщика обязательны', 'danger');
+                return;
+            }
+            
+            if (editingId !== null) {
+                // Редактирование существующего поставщика
+                const index = suppliers.findIndex(s => s.id === editingId);
+                if (index !== -1) {
+                    suppliers[index] = {
+                        id: editingId,
+                        name,
+                        contact,
+                        phone,
+                        email
+                    };
+                    showAlert('Поставщик успешно обновлен', 'success');
+                }
+            } else {
+                // Добавление нового поставщика
+                const newId = suppliers.length > 0 ? Math.max(...suppliers.map(s => s.id)) + 1 : 1;
+                suppliers.push({
+                    id: newId,
+                    name,
+                    contact,
+                    phone,
+                    email
+                });
+                showAlert('Поставщик успешно добавлен', 'success');
+            }
+            
+            hideSupplierForm();
+            renderSuppliers();
+            populateSupplierDropdown();
+        }
+        
+        function editSupplier(id) {
+            const supplier = suppliers.find(s => s.id === id);
+            if (!supplier) return;
+            
+            document.getElementById('supplier-form-title').textContent = 'Изменить поставщика';
+            document.getElementById('supplier-form').style.display = 'block';
+            editingId = id;
+            
+            document.getElementById('supplier-name').value = supplier.name;
+            document.getElementById('supplier-contact').value = supplier.contact;
+            document.getElementById('supplier-phone').value = supplier.phone;
+            document.getElementById('supplier-email').value = supplier.email || '';
+            
+            document.getElementById('supplier-name').focus();
+        }
+        
+        function deleteSupplier(id) {
+            // Проверить, используется ли поставщик в товарах
+            const isUsed = products.some(p => p.supplierId === id);
+            
+            if (isUsed) {
+                showAlert('Невозможно удалить поставщика, так как он используется в товарах', 'danger');
+                return;
+            }
+            
+            if (confirm('Вы уверены, что хотите удалить этого поставщика?')) {
+                suppliers = suppliers.filter(s => s.id !== id);
+                showAlert('Поставщик успешно удален', 'success');
+                renderSuppliers();
+                populateSupplierDropdown();
+            }
+        }
+        
+        // ========== Функции для работы с просроченными товарами ==========
+        function renderExpiredProducts() {
+            const expiredList = document.getElementById('expired-list');
+            expiredList.innerHTML = '';
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const expiredProducts = products.filter(product => {
+                const expiryDate = new Date(product.expiry);
+                return expiryDate < today;
+            });
+            
+            if (expiredProducts.length === 0) {
+                expiredList.innerHTML = '<tr><td colspan="7" style="text-align: center;">Нет просроченных товаров</td></tr>';
+                return;
+            }
+            
+            expiredProducts.forEach(product => {
+                const category = getCategoryById(product.categoryId);
+                const manufacturer = getManufacturerById(product.manufacturerId);
+                
+                // Вычисление количества просроченных дней
+                const expiryDate = new Date(product.expiry);
+                const diffTime = today - expiryDate;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${product.name}</td>
+                    <td>${category ? category.name : 'Неизвестно'}</td>
+                    <td>${manufacturer ? manufacturer.name : 'Неизвестно'}</td>
+                    <td>${product.quantity}</td>
+                    <td>${formatDate(product.expiry)}</td>
+                    <td>${diffDays}</td>
+                    <td>
+                        <button onclick="deleteExpiredProduct(${product.id})" class="danger">Утилизировать</button>
+                    </td>
+                `;
+                expiredList.appendChild(row);
+            });
+        }
+        
+        function deleteExpiredProduct(id) {
+            if (confirm('Вы уверены, что хотите утилизировать этот просроченный товар? Это действие нельзя отменить.')) {
+                products = products.filter(p => p.id !== id);
+                showAlert('Просроченный товар успешно утилизирован', 'success');
+                renderProducts();
+                renderExpiredProducts();
+            }
+        }
+    </script>
+</body>
+</html>
