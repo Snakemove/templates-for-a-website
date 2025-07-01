@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система управления складом</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .nav-tab {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .nav-tab.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 60%;
+            max-width: 600px;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+        }
+        .product-image-container {
+            width: 100%;
+            height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f3f4f6;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .expired {
+            background-color: #fee2e2;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold text-center mb-8">Система управления складом</h1>
+        
+        <!-- Notification -->
+        <div id="notification" class="notification"></div>
+        
+        <!-- Tabs Navigation -->
+        <div class="flex border-b mb-4">
+            <div class="nav-tab px-4 py-2 active" data-tab="products">Товары</div>
+            <div class="nav-tab px-4 py-2" data-tab="categories">Категории</div>
+            <div class="nav-tab px-4 py-2" data-tab="suppliers">Поставщики</div>
+            <div class="nav-tab px-4 py-2" data-tab="manufacturers">Производители</div>
+            <div class="nav-tab px-4 py-2" data-tab="shipments">Отгрузки</div>
+            <div class="nav-tab px-4 py-2" data-tab="expired">Просроченные</div>
+        </div>
+        
+        <!-- Search Section -->
+        <div class="mb-6">
+            <input type="text" id="searchInput" placeholder="Поиск товаров..." class="w-full p-2 border rounded">
+        </div>
+        
+        <!-- Tabs Content -->
+        <div id="products" class="tab-content active">
+            <button onclick="openModal('addProductModal')" class="bg-blue-500 text-white px-4 py-2 rounded mb-4">Добавить товар</button>
+            <div id="productsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+        
+        <div id="categories" class="tab-content">
+            <button onclick="openModal('addCategoryModal')" class="bg-blue-500 text-white px-4 py-2 rounded mb-4">Добавить категорию</button>
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="p-3 border">ID</th>
+                        <th class="p-3 border">Название</th>
+                        <th class="p-3 border">Описание</th>
+                        <th class="p-3 border">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="categoriesList">
+                    <!-- Categories will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="suppliers" class="tab-content">
+            <button onclick="openModal('addSupplierModal')" class="bg-blue-500 text-white px-4 py-2 rounded mb-4">Добавить поставщика</button>
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="p-3 border">ID</th>
+                        <th class="p-3 border">Название</th>
+                        <th class="p-3 border">Контакты</th>
+                        <th class="p-3 border">Адрес</th>
+                        <th class="p-3 border">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="suppliersList">
+                    <!-- Suppliers will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="manufacturers" class="tab-content">
+            <button onclick="openModal('addManufacturerModal')" class="bg-blue-500 text-white px-4 py-2 rounded mb-4">Добавить производителя</button>
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="p-3 border">ID</th>
+                        <th class="p-3 border">Название</th>
+                        <th class="p-3 border">Страна</th>
+                        <th class="p-3 border">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="manufacturersList">
+                    <!-- Manufacturers will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="shipments" class="tab-content">
+            <button onclick="openModal('addShipmentModal')" class="bg-blue-500 text-white px-4 py-2 rounded mb-4">Создать отгрузку</button>
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="p-3 border">ID</th>
+                        <th class="p-3 border">Дата</th>
+                        <th class="p-3 border">Товар</th>
+                        <th class="p-3 border">Количество</th>
+                        <th class="p-3 border">Клиент</th>
+                        <th class="p-3 border">Накладная</th>
+                    </tr>
+                </thead>
+                <tbody id="shipmentsList">
+                    <!-- Shipments will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="expired" class="tab-content">
+            <h2 class="text-xl font-bold mb-4">Товары с истекшим сроком годности</h2>
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="p-3 border">ID</th>
+                        <th class="p-3 border">Название</th>
+                        <th class="p-3 border">Категория</th>
+                        <th class="p-3 border">Производитель</th>
+                        <th class="p-3 border">Количество</th>
+                        <th class="p-3 border">Срок годности</th>
+                    </tr>
+                </thead>
+                <tbody id="expiredProductsList">
+                    <!-- Expired products will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Modal Windows -->
+    <!-- Add Product Modal -->
+    <div id="addProductModal" class="modal">
+        <div class="modal-content">
+            <span class="float-right font-bold cursor-pointer" onclick="closeModal('addProductModal')">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Добавить товар</h2>
+            <form id="addProductForm">
+                <div class="product-image-container mb-4">
+                    <img id="productImagePreview" src="https://placehold.co/600x400" alt="Превью изображения товара" class="max-h-full max-w-full">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Название товара:</label>
+                    <input type="text" name="name" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Категория:</label>
+                    <select name="category_id" required class="w-full p-2 border rounded">
+                        <option value="">Выберите категорию</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Производитель:</label>
+                    <select name="manufacturer_id" required class="w-full p-2 border rounded">
+                        <option value="">Выберите производителя</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Поставщик:</label>
+                    <select name="supplier_id" required class="w-full p-2 border rounded">
+                        <option value="">Выберите поставщика</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Количество:</label>
+                    <input type="number" name="quantity" required min="1" class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Цена за единицу:</label>
+                    <input type="number" name="price" required min="0.01" step="0.01" class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Дата производства:</label>
+                    <input type="date" name="production_date" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Срок годности (месяцев):</label>
+                    <input type="number" name="expiry_months" required min="1" class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Изображение товара:</label>
+                    <input type="file" name="image" accept="image/*" class="w-full p-2 border rounded" onchange="previewImage(event)">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Описание:</label>
+                    <textarea name="description" rows="3" class="w-full p-2 border rounded"></textarea>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Сохранить</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Product Modal -->
+    <div id="editProductModal" class="modal">
+        <div class="modal-content">
+            <span class="float-right font-bold cursor-pointer" onclick="closeModal('editProductModal')">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Редактировать товар</h2>
+            <form id="editProductForm">
+                <input type="hidden" name="id">
+                <div class="product-image-container mb-4">
+                    <img id="editProductImagePreview" src="https://placehold.co/600x400" alt="Превью редактируемого изображения товара" class="max-h-full max-w-full">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Название товара:</label>
+                    <input type="text" name="name" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Категория:</label>
+                    <select name="category_id" required class="w-full p-2 border rounded">
+                        <option value="">Выберите категорию</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Производитель:</label>
+                    <select name="manufacturer_id" required class="w-full p-2 border rounded">
+                        <option value="">Выберите производителя</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Поставщик:</label>
+                    <select name="supplier_id" required class="w-full p-2 border rounded">
+                        <option value="">Выберите поставщика</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Количество:</label>
+                    <input type="number" name="quantity" required min="1" class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Цена за единицу:</label>
+                    <input type="number" name="price" required min="0.01" step="0.01" class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Дата производства:</label>
+                    <input type="date" name="production_date" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Срок годности (месяцев):</label>
+                    <input type="number" name="expiry_months" required min="1" class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Новое изображение товара:</label>
+                    <input type="file" name="image" accept="image/*" class="w-full p-2 border rounded" onchange="previewEditImage(event)">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Описание:</label>
+                    <textarea name="description" rows="3" class="w-full p-2 border rounded"></textarea>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Обновить</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Category Modal -->
+    <div id="addCategoryModal" class="modal">
+        <div class="modal-content">
+            <span class="float-right font-bold cursor-pointer" onclick="closeModal('addCategoryModal')">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Добавить категорию</h2>
+            <form id="addCategoryForm">
+                <div class="mb-4">
+                    <label class="block mb-2">Название:</label>
+                    <input type="text" name="name" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Описание:</label>
+                    <textarea name="description" rows="3" class="w-full p-2 border rounded"></textarea>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Сохранить</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Category Modal -->
+    <div id="editCategoryModal" class="modal">
+        <div class="modal-content">
+            <span class="float-right font-bold cursor-pointer" onclick="closeModal('editCategoryModal')">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Редактировать категорию</h2>
+            <form id="editCategoryForm">
+                <input type="hidden" name="id">
+                <div class="mb-4">
+                    <label class="block mb-2">Название:</label>
+                    <input type="text" name="name" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Описание:</label>
+                    <textarea name="description" rows="3" class="w-full p-2 border rounded"></textarea>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Обновить</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Supplier Modal -->
+    <div id="addSupplierModal" class="modal">
+        <div class="modal-content">
+            <span class="float-right font-bold cursor-pointer" onclick="closeModal('addSupplierModal')">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Добавить поставщика</h2>
+            <form id="addSupplierForm">
+                <div class="mb-4">
+                    <label class="block mb-2">Название компании:</label>
+                    <input type="text" name="name" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Контактное лицо:</label>
+                    <input type="text" name="contact_person" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Телефон:</label>
+                    <input type="tel" name="phone" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Email:</label>
+                    <input type="email" name="email" class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Адрес:</label>
+                    <textarea name="address" rows="3" required class="w-full p-2 border rounded"></textarea>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Сохранить</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Supplier Modal -->
+    <div id="editSupplierModal" class="modal">
+        <div class="modal-content">
+            <span class="float-right font-bold cursor-pointer" onclick="closeModal('editSupplierModal')">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Редактировать поставщика</h2>
+            <form id="editSupplierForm">
+                <input type="hidden" name="id">
+                <div class="mb-4">
+                    <label class="block mb-2">Название компании:</label>
+                    <input type="text" name="name" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Контактное лицо:</label>
+                    <input type="text" name="contact_person" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Телефон:</label>
+                    <input type="tel" name="phone" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Email:</label>
+                    <input type="email" name="email" class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Адрес:</label>
+                    <textarea name="address" rows="3" required class="w-full p-2 border rounded"></textarea>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Обновить</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Manufacturer Modal -->
+    <div id="addManufacturerModal" class="modal">
+        <div class="modal-content">
+            <span class="float-right font-bold cursor-pointer" onclick="closeModal('addManufacturerModal')">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Добавить производителя</h2>
+            <form id="addManufacturerForm">
+                <div class="mb-4">
+                    <label class="block mb-2">Название компании:</label>
+                    <input type="text" name="name" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Страна:</label>
+                    <input type="text" name="country" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Описание:</label>
+                    <textarea name="description" rows="3" class="w-full p-2 border rounded"></textarea>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Сохранить</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Manufacturer Modal -->
+    <div id="editManufacturerModal" class="modal">
+        <div class="modal-content">
+            <span class="float-right font-bold cursor-pointer" onclick="closeModal('editManufacturerModal')">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Редактировать производителя</h2>
+            <form id="editManufacturerForm">
+                <input type="hidden" name="id">
+                <div class="mb-4">
+                    <label class="block mb-2">Название компании:</label>
+                    <input type="text" name="name" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Страна:</label>
+                    <input type="text" name="country" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Описание:</label>
+                    <textarea name="description" rows="3" class="w-full p-2 border rounded"></textarea>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Обновить</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Shipment Modal -->
+    <div id="addShipmentModal" class="modal">
+        <div class="modal-content">
+            <span class="float-right font-bold cursor-pointer" onclick="closeModal('addShipmentModal')">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Создать отгрузку</h2>
+            <form id="addShipmentForm">
+                <div class="mb-4">
+                    <label class="block mb-2">Товар:</label>
+                    <select name="product_id" required class="w-full p-2 border rounded">
+                        <option value="">Выберите товар</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Количество:</label>
+                    <input type="number" name="quantity" required min="1" class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Клиент:</label>
+                    <input type="text" name="client" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Адрес доставки:</label>
+                    <textarea name="delivery_address" rows="3" required class="w-full p-2 border rounded"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Номер накладной:</label>
+                    <input type="text" name="invoice_number" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Дата отгрузки:</label>
+                    <input type="date" name="shipment_date" required class="w-full p-2 border rounded">
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Создать</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Product Shipment Modal -->
+    <div id="shipProductModal" class="modal">
+        <div class="modal-content">
+            <span class="float-right font-bold cursor-pointer" onclick="closeModal('shipProductModal')">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Отгрузить товар</h2>
+            <form id="shipProductForm">
+                <input type="hidden" name="id">
+                <div class="mb-4">
+                    <h3 id="shipProductName" class="font-bold"></h3>
+                    <p id="shipProductAvailable" class="text-sm text-gray-600 mb-2"></p>
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Количество для отгрузки:</label>
+                    <input type="number" name="quantity" required min="1" class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Клиент:</label>
+                    <input type="text" name="client" required class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Адрес доставки:</label>
+                    <textarea name="delivery_address" rows="3" required class="w-full p-2 border rounded"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="block mb-2">Номер накладной:</label>
+                    <input type="text" name="invoice_number" required class="w-full p-2 border rounded">
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Отгрузить</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Database simulation
+        const db = {
+            products: [],
+            categories: [],
+            suppliers: [],
+            manufacturers: [],
+            shipments: [],
+            nextId: {
+                products: 1,
+                categories: 1,
+                suppliers: 1,
+                manufacturers: 1,
+                shipments: 1
+            }
+        };
+
+        // Sample data
+        function initializeSampleData() {
+            // Add some categories
+            db.categories = [
+                { id: 1, name: "Электроника", description: "Технические устройства" },
+                { id: 2, name: "Бытовая химия", description: "Моющие и чистящие средства" },
+                { id: 3, name: "Продукты питания", description: "Пищевые продукты" }
+            ];
+            db.nextId.categories = 4;
+
+            // Add some manufacturers
+            db.manufacturers = [
+                { id: 1, name: "Samsung", country: "Южная Корея", description: "Производитель электроники" },
+                { id: 2, name: "Procter & Gamble", country: "США", description: "Производитель бытовой химии" },
+                { id: 3, name: "Nestlé", country: "Швейцария", description: "Производитель продуктов питания" }
+            ];
+            db.nextId.manufacturers = 4;
+
+            // Add some suppliers
+            db.suppliers = [
+                { id: 1, name: "ТехноПоставка", contact_person: "Иван Петров", phone: "+79991234567", email: "info@techno.ru", address: "г. Москва, ул. Тверская, д. 1" },
+                { id: 2, name: "ХимСнаб", contact_person: "Мария Сидорова", phone: "+79992345678", email: "info@himsnab.ru", address: "г. Санкт-Петербург, Невский пр., д. 10" },
+                { id: 3, name: "ПродТрейд", contact_person: "Алексей Иванов", phone: "+79993456789", email: "info@prodtrade.ru", address: "г. Екатеринбург, ул. Ленина, д. 5" }
+            ];
+            db.nextId.suppliers = 4;
+
+            // Add some products
+            const today = new Date();
+            const monthAgo = new Date(today);
+            monthAgo.setMonth(today.getMonth() - 1);
+            
+            const yearAgo = new Date(today);
+            yearAgo.setFullYear(today.getFullYear() - 1);
+            
+            const expiredDate = new Date(today);
+            expiredDate.setFullYear(today.getFullYear() - 1);
+            
+            db.products = [
+                { 
+                    id: 1, 
+                    name: "Смартфон Galaxy S21", 
+                    category_id: 1, 
+                    manufacturer_id: 1, 
+                    supplier_id: 1,
+                    quantity: 15,
+                    price: 69999,
+                    production_date: monthAgo.toISOString().split('T')[0],
+                    expiry_months: 24,
+                    description: "Флагманский смартфон с отличной камерой",
+                    image: "https://placehold.co/600x400?text=Galaxy+S21"
+                },
+                { 
+                    id: 2, 
+                    name: "Стиральный порошок Tide", 
+                    category_id: 2, 
+                    manufacturer_id: 2, 
+                    supplier_id: 2,
+                    quantity: 40,
+                    price: 899,
+                    production_date: monthAgo.toISOString().split('T')[0],
+                    expiry_months: 36,
+                    description: "Автоматический стиральный порошок",
+                    image: "https://placehold.co/600x400?text=Tide"
+                },
+                { 
+                    id: 3, 
+                    name: "Шоколадный батончик KitKat", 
+                    category_id: 3, 
+                    manufacturer_id: 3, 
+                    supplier_id: 3,
+                    quantity: 120,
+                    price: 49,
+                    production_date: yearAgo.toISOString().split('T')[0],
+                    expiry_months: 12,
+                    description: "Хрустящий вафельный батончик в шоколаде",
+                    image: "https://placehold.co/600x400?text=KitKat"
+                }
+            ];
+            db.nextId.products = 4;
+
+            // Add some shipments
+            db.shipments = [
+                { 
+                    id: 1,
+                    product_id: 1,
+                    quantity: 5,
+                    client: "Магазин 'ТехноМир'",
+                    delivery_address: "г. Москва, ул. Арбат, д. 15",
+                    invoice_number: "INV-2023001",
+                    shipment_date: today.toISOString().split('T')[0]
+                },
+                { 
+                    id: 2,
+                    product_id: 2,
+                    quantity: 10,
+                    client: "Сеть магазинов 'Чистота'",
+                    delivery_address: "г. Москва, Ленинский пр., д. 30",
+                    invoice_number: "INV-2023002",
+                    shipment_date: today.toISOString().split('T')[0]
+                }
+            ];
+            db.nextId.shipments = 3;
+        }
+
+        // Initialize sample data
+        initializeSampleData();
+
+        // DOM Ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tabs
+            initTabs();
+            
+            // Load initial data
+            loadProducts();
+            loadCategories();
+            loadSuppliers();
+            loadManufacturers();
+            loadShipments();
+            loadExpiredProducts();
+            
+            // Initialize dropdowns in modals
+            updateCategoryDropdowns();
+            updateManufacturerDropdowns();
+            updateSupplierDropdowns();
+            updateProductDropdown();
+            
+            // Form handlers
+            setupFormHandlers();
+            
+            // Search handler
+            document.getElementById('searchInput').addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                filterProducts(searchTerm);
+            });
+        });
+
+        // Tab functionality
+        function initTabs() {
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Hide all tab contents
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Show the selected tab content
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Image preview functions
+        function previewImage(event) {
+            const input = event.target;
+            const preview = document.getElementById('productImagePreview');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function previewEditImage(event) {
+            const input = event.target;
+            const preview = document.getElementById('editProductImagePreview');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Notification functions
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification bg-${type === 'success' ? 'green' : 'red'}-500 text-white`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Data loading functions
+        function loadProducts() {
+            const container = document.getElementById('productsList');
+            container.innerHTML = '';
+            
+            db.products.forEach(product => {
+                const category = db.categories.find(c => c.id === product.category_id);
+                const manufacturer = db.manufacturers.find(m => m.id === product.manufacturer_id);
+                const supplier = db.suppliers.find(s => s.id === product.supplier_id);
+                
+                // Calculate expiry date
+                const productionDate = new Date(product.production_date);
+                const expiryDate = new Date(productionDate);
+                expiryDate.setMonth(productionDate.getMonth() + product.expiry_months);
+                
+                // Check if expired
+                const today = new Date();
+                const isExpired = expiryDate < today;
+                
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-lg shadow-md overflow-hidden ${isExpired ? 'expired' : ''}`;
+                card.innerHTML = `
+                    <div class="product-image-container">
+                        <img src="${product.image}" alt="${product.name}" class="max-h-full max-w-full" onerror="this.src='https://placehold.co/600x400?text=No+Image'">
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-lg mb-1">${product.name}</h3>
+                        <p class="text-sm text-gray-600 mb-1">Категория: ${category ? category.name : 'Не указана'}</p>
+                        <p class="text-sm text-gray-600 mb-1">Производитель: ${manufacturer ? manufacturer.name : 'Не указан'}</p>
+                        <p class="text-sm text-gray-600 mb-1">Поставщик: ${supplier ? supplier.name : 'Не указан'}</p>
+                        <p class="text-sm text-gray-600 mb-1">Количество: ${product.quantity}</p>
+                        <p class="text-sm text-gray-600 mb-1">Цена: ${product.price.toLocaleString('ru-RU')} ₽</p>
+                        <p class="text-sm text-gray-600 mb-1">Срок годности: ${expiryDate.toLocaleDateString('ru-RU')}</p>
+                        <p class="text-sm text-gray-600 mb-3">${isExpired ? '<span class="text-red-500">Просрочено</span>' : '<span class="text-green-500">Годен</span>'}</p>
+                        <div class="flex justify-between">
+                            <button onclick="openEditProductModal(${product.id})" class="bg-yellow-500 text-white px-3 py-1 rounded text-sm">Редактировать</button>
+                            <button onclick="openShipProductModal(${product.id})" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Отгрузить</button>
+                            <button onclick="deleteProduct(${product.id})" class="bg-red-500 text-white px-3 py-1 rounded text-sm">Удалить</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function loadCategories() {
+            const container = document.getElementById('categoriesList');
+            container.innerHTML = '';
+            
+            db.categories.forEach(category => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="p-3 border">${category.id}</td>
+                    <td class="p-3 border">${category.name}</td>
+                    <td class="p-3 border">${category.description}</td>
+                    <td class="p-3 border">
+                        <button onclick="openEditCategoryModal(${category.id})" class="bg-yellow-500 text-white px-2 py-1 rounded text-sm mr-2">Редактировать</button>
+                        <button onclick="deleteCategory(${category.id})" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Удалить</button>
+                    </td>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function loadSuppliers() {
+            const container = document.getElementById('suppliersList');
+            container.innerHTML = '';
+            
+            db.suppliers.forEach(supplier => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="p-3 border">${supplier.id}</td>
+                    <td class="p-3 border">${supplier.name}</td>
+                    <td class="p-3 border">
+                        <div>${supplier.contact_person}</div>
+                        <div>${supplier.phone}</div>
+                        <div>${supplier.email}</div>
+                    </td>
+                    <td class="p-3 border">${supplier.address}</td>
+                    <td class="p-3 border">
+                        <button onclick="openEditSupplierModal(${supplier.id})" class="bg-yellow-500 text-white px-2 py-1 rounded text-sm mr-2">Редактировать</button>
+                        <button onclick="deleteSupplier(${supplier.id})" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Удалить</button>
+                    </td>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function loadManufacturers() {
+            const container = document.getElementById('manufacturersList');
+            container.innerHTML = '';
+            
+            db.manufacturers.forEach(manufacturer => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="p-3 border">${manufacturer.id}</td>
+                    <td class="p-3 border">${manufacturer.name}</td>
+                    <td class="p-3 border">${manufacturer.country}</td>
+                    <td class="p-3 border">
+                        <button onclick="openEditManufacturerModal(${manufacturer.id})" class="bg-yellow-500 text-white px-2 py-1 rounded text-sm mr-2">Редактировать</button>
+                        <button onclick="deleteManufacturer(${manufacturer.id})" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Удалить</button>
+                    </td>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function loadShipments() {
+            const container = document.getElementById('shipmentsList');
+            container.innerHTML = '';
+            
+            db.shipments.forEach(shipment => {
+                const product = db.products.find(p => p.id === shipment.product_id);
+                
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="p-3 border">${shipment.id}</td>
+                    <td class="p-3 border">${shipment.shipment_date}</td>
+                    <td class="p-3 border">${product ? product.name : 'Товар удален'}</td>
+                    <td class="p-3 border">${shipment.quantity}</td>
+                    <td class="p-3 border">${shipment.client}</td>
+                    <td class="p-3 border">${shipment.invoice_number}</td>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function loadExpiredProducts() {
+            const container = document.getElementById('expiredProductsList');
+            container.innerHTML = '';
+            
+            const today = new Date();
+            
+            db.products.forEach(product => {
+                const productionDate = new Date(product.production_date);
+                const expiryDate = new Date(productionDate);
+                expiryDate.setMonth(productionDate.getMonth() + product.expiry_months);
+                
+                if (expiryDate < today) {
+                    const category = db.categories.find(c => c.id === product.category_id);
+                    const manufacturer = db.manufacturers.find(m => m.id === product.manufacturer_id);
+                    
+                    const row = document.createElement('tr');
+                    row.className = 'expired hover:bg-gray-50';
+                    row.innerHTML = `
+                        <td class="p-3 border">${product.id}</td>
+                        <td class="p-3 border">${product.name}</td>
+                        <td class="p-3 border">${category ? category.name : 'Не указана'}</td>
+                        <td class="p-3 border">${manufacturer ? manufacturer.name : 'Не указан'}</td>
+                        <td class="p-3 border">${product.quantity}</td>
+                        <td class="p-3 border">${expiryDate.toLocaleDateString('ru-RU')}</td>
+                    `;
+                    container.appendChild(row);
+                }
+            });
+        }
+
+        // Dropdown update functions
+        function updateCategoryDropdowns() {
+            const dropdowns = document.querySelectorAll('select[name="category_id"]');
+            dropdowns.forEach(dropdown => {
+                dropdown.innerHTML = '<option value="">Выберите категорию</option>';
+                db.categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    dropdown.appendChild(option);
+                });
+            });
+        }
+
+        function updateManufacturerDropdowns() {
+            const dropdowns = document.querySelectorAll('select[name="manufacturer_id"]');
+            dropdowns.forEach(dropdown => {
+                dropdown.innerHTML = '<option value="">Выберите производителя</option>';
+                db.manufacturers.forEach(manufacturer => {
+                    const option = document.createElement('option');
+                    option.value = manufacturer.id;
+                    option.textContent = manufacturer.name;
+                    dropdown.appendChild(option);
+                });
+            });
+        }
+
+        function updateSupplierDropdowns() {
+            const dropdowns = document.querySelectorAll('select[name="supplier_id"]');
+            dropdowns.forEach(dropdown => {
+                dropdown.innerHTML = '<option value="">Выберите поставщика</option>';
+                db.suppliers.forEach(supplier => {
+                    const option = document.createElement('option');
+                    option.value = supplier.id;
+                    option.textContent = supplier.name;
+                    dropdown.appendChild(option);
+                });
+            });
+        }
+
+        function updateProductDropdown() {
+            const dropdown = document.querySelector('select[name="product_id"]');
+            dropdown.innerHTML = '<option value="">Выберите товар</option>';
+            db.products.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.id;
+                option.textContent = product.name;
+                dropdown.appendChild(option);
+            });
+        }
+
+        // Product functions
+        function openEditProductModal(productId) {
+            const product = db.products.find(p => p.id === productId);
+            if (!product) return;
+            
+            const form = document.getElementById('editProductForm');
+            form['id'].value = product.id;
+            form['name'].value = product.name;
+            form['category_id'].value = product.category_id;
+            form['manufacturer_id'].value = product.manufacturer_id;
+            form['supplier_id'].value = product.supplier_id;
+            form['quantity'].value = product.quantity;
+            form['price'].value = product.price;
+            form['production_date'].value = product.production_date;
+            form['expiry_months'].value = product.expiry_months;
+            form['description'].value = product.description;
+            
+            const preview = document.getElementById('editProductImagePreview');
+            preview.src = product.image;
+            
+            openModal('editProductModal');
+        }
+
+        function openShipProductModal(productId) {
+            const product = db.products.find(p => p.id === productId);
+            if (!product) return;
+            
+            const form = document.getElementById('shipProductForm');
+            form['id'].value = product.id;
+            
+            document.getElementById('shipProductName').textContent = product.name;
+            document.getElementById('shipProductAvailable').textContent = `Доступно: ${product.quantity} шт.`;
+            form['quantity'].max = product.quantity;
+            
+            openModal('shipProductModal');
+        }
+
+        function deleteProduct(productId) {
+            if (confirm('Вы уверены, что хотите удалить этот товар?')) {
+                db.products = db.products.filter(p => p.id !== productId);
+                loadProducts();
+                loadShipments();
+                loadExpiredProducts();
+                showNotification('Товар успешно удален');
+            }
+        }
+
+        // Category functions
+        function openEditCategoryModal(categoryId) {
+            const category = db.categories.find(c => c.id === categoryId);
+            if (!category) return;
+            
+            const form = document.getElementById('editCategoryForm');
+            form['id'].value = category.id;
+            form['name'].value = category.name;
+            form['description'].value = category.description;
+            
+            openModal('editCategoryModal');
+        }
+
+        function deleteCategory(categoryId) {
+            // Check if any products reference this category
+            const productsWithThisCategory = db.products.filter(p => p.category_id === categoryId);
+            
+            if (productsWithThisCategory.length > 0) {
+                alert('Невозможно удалить категорию, так как существуют товары, которые к ней относятся.');
+                return;
+            }
+            
+            if (confirm('Вы уверены, что хотите удалить эту категорию?')) {
+                db.categories = db.categories.filter(c => c.id !== categoryId);
+                loadCategories();
+                updateCategoryDropdowns();
+                showNotification('Категория успешно удалена');
+            }
+        }
+
+        // Supplier functions
+        function openEditSupplierModal(supplierId) {
+            const supplier = db.suppliers.find(s => s.id === supplierId);
+            if (!supplier) return;
+            
+            const form = document.getElementById('editSupplierForm');
+            form['id'].value = supplier.id;
+            form['name'].value = supplier.name;
+            form['contact_person'].value = supplier.contact_person;
+            form['phone'].value = supplier.phone;
+            form['email'].value = supplier.email;
+            form['address'].value = supplier.address;
+            
+            openModal('editSupplierModal');
+        }
+
+        function deleteSupplier(supplierId) {
+            // Check if any products reference this supplier
+            const productsWithThisSupplier = db.products.filter(p => p.supplier_id === supplierId);
+            
+            if (productsWithThisSupplier.length > 0) {
+                alert('Невозможно удалить поставщика, так как существуют товары, которые к нему относятся.');
+                return;
+            }
+            
+            if (confirm('Вы уверены, что хотите удалить этого поставщика?')) {
+                db.suppliers = db.suppliers.filter(s => s.id !== supplierId);
+                loadSuppliers();
+                updateSupplierDropdowns();
+                showNotification('Поставщик успешно удален');
+            }
+        }
+
+        // Manufacturer functions
+        function openEditManufacturerModal(manufacturerId) {
+            const manufacturer = db.manufacturers.find(m => m.id === manufacturerId);
+            if (!manufacturer) return;
+            
+            const form = document.getElementById('editManufacturerForm');
+            form['id'].value = manufacturer.id;
+            form['name'].value = manufacturer.name;
+            form['country'].value = manufacturer.country;
+            form['description'].value = manufacturer.description;
+            
+            openModal('editManufacturerModal');
+        }
+
+        function deleteManufacturer(manufacturerId) {
+            // Check if any products reference this manufacturer
+            const productsWithThisManufacturer = db.products.filter(p => p.manufacturer_id === manufacturerId);
+            
+            if (productsWithThisManufacturer.length > 0) {
+                alert('Невозможно удалить производителя, так как существуют товары, которые к нему относятся.');
+                return;
+            }
+            
+            if (confirm('Вы уверены, что хотите удалить этого производителя?')) {
+                db.manufacturers = db.manufacturers.filter(m => m.id !== manufacturerId);
+                loadManufacturers();
+                updateManufacturerDropdowns();
+                showNotification('Производитель успешно удален');
+            }
+        }
+
+        // Form handlers
+        function setupFormHandlers() {
+            // Add Product Form
+            document.getElementById('addProductForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const product = {
+                    id: db.nextId.products++,
+                    name: formData.get('name'),
+                    category_id: parseInt(formData.get('category_id')),
+                    manufacturer_id: parseInt(formData.get('manufacturer_id')),
+                    supplier_id: parseInt(formData.get('supplier_id')),
+                    quantity: parseInt(formData.get('quantity')),
+                    price: parseFloat(formData.get('price')),
+                    production_date: formData.get('production_date'),
+                    expiry_months: parseInt(formData.get('expiry_months')),
+                    description: formData.get('description'),
+                    image: document.getElementById('productImagePreview').src
+                };
+                
+                db.products.push(product);
+                loadProducts();
+                loadExpiredProducts();
+                updateProductDropdown();
+                closeModal('addProductModal');
+                this.reset();
+                document.getElementById('productImagePreview').src = 'https://placehold.co/600x400';
+                showNotification('Товар успешно добавлен');
+            });
+            
+            // Edit Product Form
+            document.getElementById('editProductForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const productId = parseInt(formData.get('id'));
+                const productIndex = db.products.findIndex(p => p.id === productId);
+                
+                if (productIndex === -1) return;
+                
+                db.products[productIndex] = {
+                    id: productId,
+                    name: formData.get('name'),
+                    category_id: parseInt(formData.get('category_id')),
+                    manufacturer_id: parseInt(formData.get('manufacturer_id')),
+                    supplier_id: parseInt(formData.get('supplier_id')),
+                    quantity: parseInt(formData.get('quantity')),
+                    price: parseFloat(formData.get('price')),
+                    production_date: formData.get('production_date'),
+                    expiry_months: parseInt(formData.get('expiry_months')),
+                    description: formData.get('description'),
+                    image: document.getElementById('editProductImagePreview').src
+                };
+                
+                loadProducts();
+                loadShipments();
+                loadExpiredProducts();
+                updateProductDropdown();
+                closeModal('editProductModal');
+                showNotification('Товар успешно обновлен');
+            });
+            
+            // Ship Product Form
+            document.getElementById('shipProductForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const productId = parseInt(formData.get('id'));
+                const quantity = parseInt(formData.get('quantity'));
+                
+                const productIndex = db.products.findIndex(p => p.id === productId);
+                if (productIndex === -1) return;
+                
+                // Check if enough quantity is available
+                if (db.products[productIndex].quantity < quantity) {
+                    alert('Недостаточно товара на складе');
+                    return;
+                }
+                
+                // Reduce product quantity
+                db.products[productIndex].quantity -= quantity;
+                
+                // Create shipment record
+                const shipment = {
+                    id: db.nextId.shipments++,
+                    product_id: productId,
+                    quantity: quantity,
+                    client: formData.get('client'),
+                    delivery_address: formData.get('delivery_address'),
+                    invoice_number: formData.get('invoice_number'),
+                    shipment_date: new Date().toISOString().split('T')[0]
+                };
+                
+                db.shipments.push(shipment);
+                
+                loadProducts();
+                loadShipments();
+                loadExpiredProducts();
+                closeModal('shipProductModal');
+                this.reset();
+                showNotification('Товар успешно отгружен');
+            });
+            
+            // Add Category Form
+            document.getElementById('addCategoryForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const category = {
+                    id: db.nextId.categories++,
+                    name: formData.get('name'),
+                    description: formData.get('description')
+                };
+                
+                db.categories.push(category);
+                loadCategories();
+                updateCategoryDropdowns();
+                closeModal('addCategoryModal');
+                this.reset();
+                showNotification('Категория успешно добавлена');
+            });
+            
+            // Edit Category Form
+            document.getElementById('editCategoryForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const categoryId = parseInt(formData.get('id'));
+                const categoryIndex = db.categories.findIndex(c => c.id === categoryId);
+                
+                if (categoryIndex === -1) return;
+                
+                db.categories[categoryIndex] = {
+                    id: categoryId,
+                    name: formData.get('name'),
+                    description: formData.get('description')
+                };
+                
+                loadCategories();
+                updateCategoryDropdowns();
+                closeModal('editCategoryModal');
+                showNotification('Категория успешно обновлена');
+            });
+            
+            // Add Supplier Form
+            document.getElementById('addSupplierForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const supplier = {
+                    id: db.nextId.suppliers++,
+                    name: formData.get('name'),
+                    contact_person: formData.get('contact_person'),
+                    phone: formData.get('phone'),
+                    email: formData.get('email'),
+                    address: formData.get('address')
+                };
+                
+                db.suppliers.push(supplier);
+                loadSuppliers();
+                updateSupplierDropdowns();
+                closeModal('addSupplierModal');
+                this.reset();
+                showNotification('Поставщик успешно добавлен');
+            });
+            
+            // Edit Supplier Form
+            document.getElementById('editSupplierForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const supplierId = parseInt(formData.get('id'));
+                const supplierIndex = db.suppliers.findIndex(s => s.id === supplierId);
+                
+                if (supplierIndex === -1) return;
+                
+                db.suppliers[supplierIndex] = {
+                    id: supplierId,
+                    name: formData.get('name'),
+                    contact_person: formData.get('contact_person'),
+                    phone: formData.get('phone'),
+                    email: formData.get('email'),
+                    address: formData.get('address')
+                };
+                
+                loadSuppliers();
+                updateSupplierDropdowns();
+                closeModal('editSupplierModal');
+                showNotification('Поставщик успешно обновлен');
+            });
+            
+            // Add Manufacturer Form
+            document.getElementById('addManufacturerForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const manufacturer = {
+                    id: db.nextId.manufacturers++,
+                    name: formData.get('name'),
+                    country: formData.get('country'),
+                    description: formData.get('description')
+                };
+                
+                db.manufacturers.push(manufacturer);
+                loadManufacturers();
+                updateManufacturerDropdowns();
+                closeModal('addManufacturerModal');
+                this.reset();
+                showNotification('Производитель успешно добавлен');
+            });
+            
+            // Edit Manufacturer Form
+            document.getElementById('editManufacturerForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const manufacturerId = parseInt(formData.get('id'));
+                const manufacturerIndex = db.manufacturers.findIndex(m => m.id === manufacturerId);
+                
+                if (manufacturerIndex === -1) return;
+                
+                db.manufacturers[manufacturerIndex] = {
+                    id: manufacturerId,
+                    name: formData.get('name'),
+                    country: formData.get('country'),
+                    description: formData.get('description')
+                };
+                
+                loadManufacturers();
+                updateManufacturerDropdowns();
+                closeModal('editManufacturerModal');
+                showNotification('Производитель успешно обновлен');
+            });
+            
+            // Add Shipment Form
+            document.getElementById('addShipmentForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const productId = parseInt(formData.get('product_id'));
+                const quantity = parseInt(formData.get('quantity'));
+                
+                const productIndex = db.products.findIndex(p => p.id === productId);
+                if (productIndex === -1) return;
+                
+                // Check if enough quantity is available
+                if (db.products[productIndex].quantity < quantity) {
+                    alert('Недостаточно товара на складе');
+                    return;
+                }
+                
+                // Reduce product quantity
+                db.products[productIndex].quantity -= quantity;
+                
+                // Create shipment record
+                const shipment = {
+                    id: db.nextId.shipments++,
+                    product_id: productId,
+                    quantity: quantity,
+                    client: formData.get('client'),
+                    delivery_address: formData.get('delivery_address'),
+                    invoice_number: formData.get('invoice_number'),
+                    shipment_date: formData.get('shipment_date')
+                };
+                
+                db.shipments.push(shipment);
+                
+                loadProducts();
+                loadShipments();
+                loadExpiredProducts();
+                closeModal('addShipmentModal');
+                this.reset();
+                showNotification('Отгрузка успешно создана');
+            });
+        }
+
+        // Search function
+        function filterProducts(searchTerm) {
+            const container = document.getElementById('productsList');
+            container.innerHTML = '';
+            
+            const filteredProducts = db.products.filter(product => 
+                product.name.toLowerCase().includes(searchTerm) ||
+                (db.categories.find(c => c.id === product.category_id)?.name || '').toLowerCase().includes(searchTerm) ||
+                (db.manufacturers.find(m => m.id === product.manufacturer_id)?.name || '').toLowerCase().includes(searchTerm) ||
+                (db.suppliers.find(s => s.id === product.supplier_id)?.name || '').toLowerCase().includes(searchTerm)
+            );
+            
+            filteredProducts.forEach(product => {
+                const category = db.categories.find(c => c.id === product.category_id);
+                const manufacturer = db.manufacturers.find(m => m.id === product.manufacturer_id);
+                const supplier = db.suppliers.find(s => s.id === product.supplier_id);
+                
+                // Calculate expiry date
+                const productionDate = new Date(product.production_date);
+                const expiryDate = new Date(productionDate);
+                expiryDate.setMonth(productionDate.getMonth() + product.expiry_months);
+                
+                // Check if expired
+                const today = new Date();
+                const isExpired = expiryDate < today;
+                
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-lg shadow-md overflow-hidden ${isExpired ? 'expired' : ''}`;
+                card.innerHTML = `
+                    <div class="product-image-container">
+                        <img src="${product.image}" alt="${product.name}" class="max-h-full max-w-full" onerror="this.src='https://placehold.co/600x400?text=No+Image'">
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-lg mb-1">${product.name}</h3>
+                        <p class="text-sm text-gray-600 mb-1">Категория: ${category ? category.name : 'Не указана'}</p>
+                        <p class="text-sm text-gray-600 mb-1">Производитель: ${manufacturer ? manufacturer.name : 'Не указан'}</p>
+                        <p class="text-sm text-gray-600 mb-1">Поставщик: ${supplier ? supplier.name : 'Не указан'}</p>
+                        <p class="text-sm text-gray-600 mb-1">Количество: ${product.quantity}</p>
+                        <p class="text-sm text-gray-600 mb-1">Цена: ${product.price.toLocaleString('ru-RU')} ₽</p>
+                        <p class="text-sm text-gray-600 mb-1">Срок годности: ${expiryDate.toLocaleDateString('ru-RU')}</p>
+                        <p class="text-sm text-gray-600 mb-3">${isExpired ? '<span class="text-red-500">Просрочено</span>' : '<span class="text-green-500">Годен</span>'}</p>
+                        <div class="flex justify-between">
+                            <button onclick="openEditProductModal(${product.id})" class="bg-yellow-500 text-white px-3 py-1 rounded text-sm">Редактировать</button>
+                            <button onclick="openShipProductModal(${product.id})" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Отгрузить</button>
+                            <button onclick="deleteProduct(${product.id})" class="bg-red-500 text-white px-3 py-1 rounded text-sm">Удалить</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
