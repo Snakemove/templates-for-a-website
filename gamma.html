@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система подбора кадров</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #475569;
+            --light: #f8fafc;
+            --dark: #1e293b;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f1f5f9;
+        }
+        
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        
+        .card {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .form-input {
+            transition: border-color 0.2s ease;
+        }
+        
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        
+        .table-row-hover:hover {
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="flex">
+        <!-- Sidebar -->
+        <div class="sidebar bg-white w-64 min-h-screen border-r border-gray-200 overflow-y-auto">
+            <div class="p-4 border-b border-gray-200">
+                <img src="https://placehold.co/180x60" alt="Логотип компании: темно-синий прямоугольник с белым текстом названия компании" class="h-10 mx-auto" />
+            </div>
+            <nav class="mt-6">
+                <div class="px-4">
+                    <h3 class="text-xs uppercase font-semibold text-gray-500 tracking-wider mb-4">Основные</h3>
+                    <ul>
+                        <li class="mb-1">
+                            <a href="#" id="dashboard-tab" class="flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-md">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                                </svg>
+                                Панель управления
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="#" id="applicants-tab" class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                </svg>
+                                Соискатели
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="#" id="vacancies-tab" class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                                Вакансии
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="px-4 mt-8">
+                    <h3 class="text-xs uppercase font-semibold text-gray-500 tracking-wider mb-4">Справочники</h3>
+                    <ul>
+                        <li class="mb-1">
+                            <a href="#" id="education-tab" class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                </svg>
+                                Учебные заведения
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="#" id="positions-tab" class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                                Должности
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="#" id="qualifications-tab" class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Квалификации
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex-1 overflow-x-hidden overflow-y-auto">
+            <!-- Header -->
+            <header class="bg-white shadow-sm">
+                <div class="px-6 py-4 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-xl font-semibold text-gray-800" id="page-title">Панель управления</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <input type="text" placeholder="Поиск..." class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <button class="absolute right-3 top-2 text-gray-400">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <button class="p-2 text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                        </button>
+                        <div class="flex items-center">
+                            <img src="https://placehold.co/40x40" alt="Фото пользователя: мужчина в деловом костюме с нейтральным выражением лица" class="w-8 h-8 rounded-full border-2 border-blue-500">
+                            <span class="ml-2 text-sm font-medium text-gray-700">Администратор</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main id="content-area" class="p-6">
+                <!-- Dashboard Content (default) -->
+                <div id="dashboard-content">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-white rounded-lg shadow-sm p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Всего соискателей</p>
+                                    <p class="mt-1 text-3xl font-semibold text-gray-800"><span id="total-applicants">0</span></p>
+                                </div>
+                                <div class="bg-blue-100 p-3 rounded-full">
+                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg shadow-sm p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Открытые вакансии</p>
+                                    <p class="mt-1 text-3xl font-semibold text-gray-800"><span id="total-vacancies">0</span></p>
+                                </div>
+                                <div class="bg-green-100 p-3 rounded-full">
+                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg shadow-sm p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Популярные должности</p>
+                                    <p class="mt-1 text-xl font-semibold text-gray-800"><span id="top-position">Загрузка...</span></p>
+                                </div>
+                                <div class="bg-yellow-100 p-3 rounded-full">
+                                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Positions Chart -->
+                    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                        <h2 class="text-lg font-semibold text-gray-800 mb-4">Рейтинг востребованных должностей</h2>
+                        <div class="h-64">
+                            <canvas id="positionsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Applicants Content -->
+                <div id="applicants-content" class="hidden">
+                    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-semibold text-gray-800">Соискатели</h2>
+                            <button id="add-applicant-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                Добавить соискателя
+                            </button>
+                        </div>
+                        
+                        <!-- Applicant Form (hidden by default) -->
+                        <div id="applicant-form" class="hidden mb-6 bg-gray-50 p-4 rounded-md">
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">Форма соискателя</h3>
+                            <form id="applicant-data-form">
+                                <input type="hidden" id="applicant-id" value="">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                    <div>
+                                        <label for="applicant-name" class="block text-sm font-medium text-gray-700 mb-1">ФИО</label>
+                                        <input type="text" id="applicant-name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="applicant-birthdate" class="block text-sm font-medium text-gray-700 mb-1">Дата рождения</label>
+                                        <input type="date" id="applicant-birthdate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="applicant-phone" class="block text-sm font-medium text-gray-700 mb-1">Телефон</label>
+                                        <input type="tel" id="applicant-phone" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="applicant-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                        <input type="email" id="applicant-email" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="applicant-education" class="block text-sm font-medium text-gray-700 mb-1">Образование</label>
+                                        <select id="applicant-education" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="">Выберите образование</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="applicant-qualification" class="block text-sm font-medium text-gray-700 mb-1">Квалификация</label>
+                                        <select id="applicant-qualification" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="">Выберите квалификацию</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="applicant-position" class="block text-sm font-medium text-gray-700 mb-1">Желаемая должность</label>
+                                        <select id="applicant-position" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="">Выберите должность</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="applicant-experience" class="block text-sm font-medium text-gray-700 mb-1">Опыт работы (лет)</label>
+                                        <input type="number" id="applicant-experience" min="0" max="50" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="applicant-photo" class="block text-sm font-medium text-gray-700 mb-1">Фотография</label>
+                                    <div class="flex items-center">
+                                        <img id="applicant-photo-preview" src="https://placehold.co/100x100" alt="Фото соискателя" class="w-16 h-16 rounded-full object-cover border border-gray-300 mr-4">
+                                        <input type="file" id="applicant-photo" accept="image/*" class="hidden">
+                                        <button type="button" id="upload-photo-btn" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                                            Загрузить фото
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end space-x-3">
+                                    <button type="button" id="cancel-applicant-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                                        Отмена
+                                    </button>
+                                    <button type="submit" id="save-applicant-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                        Сохранить
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Applicants Table -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ФИО</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Телефон</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Должность</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="applicants-table-body" class="bg-white divide-y divide-gray-200">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vacancies Content -->
+                <div id="vacancies-content" class="hidden">
+                    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-semibold text-gray-800">Вакансии</h2>
+                            <button id="add-vacancy-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                Добавить вакансию
+                            </button>
+                        </div>
+                        
+                        <!-- Vacancy Form (hidden by default) -->
+                        <div id="vacancy-form" class="hidden mb-6 bg-gray-50 p-4 rounded-md">
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">Форма вакансии</h3>
+                            <form id="vacancy-data-form">
+                                <input type="hidden" id="vacancy-id" value="">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                    <div>
+                                        <label for="vacancy-position" class="block text-sm font-medium text-gray-700 mb-1">Должность</label>
+                                        <select id="vacancy-position" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="">Выберите должность</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="vacancy-department" class="block text-sm font-medium text-gray-700 mb-1">Отдел</label>
+                                        <input type="text" id="vacancy-department" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="vacancy-salary" class="block text-sm font-medium text-gray-700 mb-1">Зарплата</label>
+                                        <input type="text" id="vacancy-salary" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="vacancy-experience" class="block text-sm font-medium text-gray-700 mb-1">Требуемый опыт</label>
+                                        <input type="text" id="vacancy-experience" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="vacancy-education" class="block text-sm font-medium text-gray-700 mb-1">Образование</label>
+                                        <select id="vacancy-education" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="">Выберите образование</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="vacancy-qualification" class="block text-sm font-medium text-gray-700 mb-1">Квалификация</label>
+                                        <select id="vacancy-qualification" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="">Выберите квалификацию</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <label for="vacancy-description" class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
+                                    <textarea id="vacancy-description" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Статус</label>
+                                    <div class="flex items-center space-x-4">
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="vacancy-status" value="open" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                            <span class="ml-2 text-gray-700">Открыта</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="vacancy-status" value="closed" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                            <span class="ml-2 text-gray-700">Закрыта</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end space-x-3">
+                                    <button type="button" id="cancel-vacancy-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                                        Отмена
+                                    </button>
+                                    <button type="submit" id="save-vacancy-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                        Сохранить
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Vacancies Table -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Должность</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Отдел</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Зарплата</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Опыт</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vacancies-table-body" class="bg-white divide-y divide-gray-200">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Education Content -->
+                <div id="education-content" class="hidden">
+                    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-semibold text-gray-800">Учебные заведения</h2>
+                            <button id="add-education-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                Добавить
+                            </button>
+                        </div>
+                        
+                        <!-- Education Form (hidden by default) -->
+                        <div id="education-form" class="hidden mb-6 bg-gray-50 p-4 rounded-md">
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">Форма учебного заведения</h3>
+                            <form id="education-data-form">
+                                <input type="hidden" id="education-id" value="">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                    <div>
+                                        <label for="education-name" class="block text-sm font-medium text-gray-700 mb-1">Название</label>
+                                        <input type="text" id="education-name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="education-type" class="block text-sm font-medium text-gray-700 mb-1">Тип</label>
+                                        <select id="education-type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="">Выберите тип</option>
+                                            <option value="university">Университет</option>
+                                            <option value="college">Колледж</option>
+                                            <option value="school">Школа</option>
+                                            <option value="courses">Курсы</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <label for="education-address" class="block text-sm font-medium text-gray-700 mb-1">Адрес</label>
+                                    <input type="text" id="education-address" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                
+                                <div class="flex justify-end space-x-3">
+                                    <button type="button" id="cancel-education-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                                        Отмена
+                                    </button>
+                                    <button type="submit" id="save-education-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                        Сохранить
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Education Table -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Тип</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Адрес</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="education-table-body" class="bg-white divide-y divide-gray-200">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Positions Content -->
+                <div id="positions-content" class="hidden">
+                    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-semibold text-gray-800">Должности</h2>
+                            <button id="add-position-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                Добавить
+                            </button>
+                        </div>
+                        
+                        <!-- Position Form (hidden by default) -->
+                        <div id="position-form" class="hidden mb-6 bg-gray-50 p-4 rounded-md">
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">Форма должности</h3>
+                            <form id="position-data-form">
+                                <input type="hidden" id="position-id" value="">
+                                <div class="mb-6">
+                                    <label for="position-name" class="block text-sm font-medium text-gray-700 mb-1">Название</label>
+                                    <input type="text" id="position-name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <label for="position-description" class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
+                                    <textarea id="position-description" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                </div>
+                                
+                                <div class="flex justify-end space-x-3">
+                                    <button type="button" id="cancel-position-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                                        Отмена
+                                    </button>
+                                    <button type="submit" id="save-position-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                        Сохранить
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Positions Table -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Описание</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="position-table-body" class="bg-white divide-y divide-gray-200">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Qualifications Content -->
+                <div id="qualifications-content" class="hidden">
+                    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-semibold text-gray-800">Квалификации</h2>
+                            <button id="add-qualification-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                Добавить
+                            </button>
+                        </div>
+                        
+                        <!-- Qualification Form (hidden by default) -->
+                        <div id="qualification-form" class="hidden mb-6 bg-gray-50 p-4 rounded-md">
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">Форма квалификации</h3>
+                            <form id="qualification-data-form">
+                                <input type="hidden" id="qualification-id" value="">
+                                <div class="mb-6">
+                                    <label for="qualification-name" class="block text-sm font-medium text-gray-700 mb-1">Название</label>
+                                    <input type="text" id="qualification-name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <label for="qualification-description" class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
+                                    <textarea id="qualification-description" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                </div>
+                                
+                                <div class="flex justify-end space-x-3">
+                                    <button type="button" id="cancel-qualification-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                                        Отмена
+                                    </button>
+                                    <button type="submit" id="save-qualification-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                        Сохранить
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Qualifications Table -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Описание</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="qualification-table-body" class="bg-white divide-y divide-gray-200">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Application state
+        const state = {
+            applicants: [],
+            vacancies: [],
+            education: [],
+            positions: [],
+            qualifications: [],
+            currentView: 'dashboard',
+            editMode: false,
+            currentEditId: null
+        };
+
+        // DOM Elements
+        const contentAreas = {
+            dashboard: document.getElementById('dashboard-content'),
+            applicants: document.getElementById('applicants-content'),
+            vacancies: document.getElementById('vacancies-content'),
+            education: document.getElementById('education-content'),
+            positions: document.getElementById('positions-content'),
+            qualifications: document.getElementById('qualifications-content')
+        };
+
+        const forms = {
+            applicant: document.getElementById('applicant-form'),
+            vacancy: document.getElementById('vacancy-form'),
+            education: document.getElementById('education-form'),
+            position: document.getElementById('position-form'),
+            qualification: document.getElementById('qualification-form')
+        };
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize sample data
+            initializeSampleData();
+            
+            // Setup navigation
+            setupNavigation();
+            
+            // Setup form handlers
+            setupFormHandlers();
+            
+            // Load initial view
+            switchView('dashboard');
+            
+            // Initialize charts
+            initializeCharts();
+        });
+
+        // Initialize with sample data
+        function initializeSampleData() {
+            // Sample positions
+            state.positions = [
+                { id: 1, name: 'Разработчик ПО', description: 'Разработка и поддержка программного обеспечения' },
+                { id: 2, name: 'Менеджер проекта', description: 'Управление IT проектами' },
+                { id: 3, name: 'Аналитик данных', description: 'Анализ и обработка данных' }
+            ];
+
+            // Sample qualifications
+            state.qualifications = [
+                { id: 1, name: 'Junior', description: 'Начинающий специалист, минимальный опыт' },
+                { id: 2, name: 'Middle', description: 'Опытный специалист, самостоятельная работа' },
+                { id: 3, name: 'Senior', description: 'Высококвалифицированный специалист, руководство командой' }
+            ];
+
+            // Sample education
+            state.education = [
+                { id: 1, name: 'МГУ', type: 'university', address: 'Москва, Ленинские горы, 1' },
+                { id: 2, name: 'МФТИ', type: 'university', address: 'Долгопрудный, Институтский переулок, 9' },
+                { id: 3, name: 'Техникум информационных технологий', type: 'college', address: 'Москва, ул. Пушкина, 15' }
+            ];
+
+            // Sample applicants
+            state.applicants = [
+                { 
+                    id: 1, 
+                    name: 'Иванов Иван Иванович', 
+                    birthdate: '1990-05-15', 
+                    phone: '+7 (999) 123-45-67', 
+                    email: 'ivanov@example.com',
+                    education: 1,
+                    qualification: 2,
+                    position: 1,
+                    experience: 3,
+                    photo: 'https://placehold.co/100x100',
+                    status: 'Рассматривается'
+                },
+                { 
+                    id: 2, 
+                    name: 'Петрова Анна Сергеевна', 
+                    birthdate: '1985-10-22', 
+                    phone: '+7 (987) 654-32-10', 
+                    email: 'petrova@example.com',
+                    education: 2,
+                    qualification: 3,
+                    position: 2,
+                    experience: 7,
+                    photo: 'https://placehold.co/100x100?text=Petrova',
+                    status: 'Принят'
+                }
+            ];
+
+            // Sample vacancies
+            state.vacancies = [
+                { 
+                    id: 1, 
+                    position: 1, 
+                    department: 'IT', 
+                    salary: '120000 руб.', 
+                    experience: '2+ года', 
+                    education: 1,
+                    qualification: 2,
+                    description: 'Ищем разработчика для работы над новыми проектами',
+                    status: 'open'
+                },
+                { 
+                    id: 2, 
+                    position: 3, 
+                    department: 'Аналитика', 
+                    salary: '150000 руб.', 
+                    experience: '3+ года', 
+                    education: 2,
+                    qualification: 3,
+                    description: 'Требуется аналитик для работы с большими данными',
+                    status: 'open'
+                }
+            ];
+        }
+
+        // Setup navigation between views
+        function setupNavigation() {
+            document.getElementById('dashboard-tab').addEventListener('click', () => switchView('dashboard'));
+            document.getElementById('applicants-tab').addEventListener('click', () => switchView('applicants'));
+            document.getElementById('vacancies-tab').addEventListener('click', () => switchView('vacancies'));
+            document.getElementById('education-tab').addEventListener('click', () => switchView('education'));
+            document.getElementById('positions-tab').addEventListener('click', () => switchView('positions'));
+            document.getElementById('qualifications-tab').addEventListener('click', () => switchView('qualifications'));
+            
+            // Add buttons
+            document.getElementById('add-applicant-btn').addEventListener('click', () => showForm('applicant'));
+            document.getElementById('add-vacancy-btn').addEventListener('click', () => showForm('vacancy'));
+            document.getElementById('add-education-btn').addEventListener('click', () => showForm('education'));
+            document.getElementById('add-position-btn').addEventListener('click', () => showForm('position'));
+            document.getElementById('add-qualification-btn').addEventListener('click', () => showForm('qualification'));
+            
+            // Cancel buttons
+            document.getElementById('cancel-applicant-btn').addEventListener('click', () => hideForm('applicant'));
+            document.getElementById('cancel-vacancy-btn').addEventListener('click', () => hideForm('vacancy'));
+            document.getElementById('cancel-education-btn').addEventListener('click', () => hideForm('education'));
+            document.getElementById('cancel-position-btn').addEventListener('click', () => hideForm('position'));
+            document.getElementById('cancel-qualification-btn').addEventListener('click', () => hideForm('qualification'));
+            
+            // Upload photo button
+            document.getElementById('upload-photo-btn').addEventListener('click', () => {
+                document.getElementById('applicant-photo').click();
+            });
+            document.getElementById('applicant-photo').addEventListener('change', handlePhotoUpload);
+        }
+
+        // Setup form handlers
+        function setupFormHandlers() {
+            // Applicant form
+            document.getElementById('applicant-data-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveApplicant();
+            });
+            
+            // Vacancy form
+            document.getElementById('vacancy-data-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveVacancy();
+            });
+            
+            // Education form
+            document.getElementById('education-data-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveEducation();
+            });
+            
+            // Position form
+            document.getElementById('position-data-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                savePosition();
+            });
+            
+            // Qualification form
+            document.getElementById('qualification-data-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveQualification();
+            });
+        }
+
+        // Handle photo upload
+        function handlePhotoUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('applicant-photo-preview').src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Switch between views
+        function switchView(view) {
+            // Hide all content areas
+            Object.values(contentAreas).forEach(area => {
+                area.classList.add('hidden');
+            });
+            
+            // Show the selected content area
+            contentAreas[view].classList.remove('hidden');
+            
+            // Update active tab
+            document.querySelectorAll('.sidebar a').forEach(link => {
+                link.classList.remove('text-blue-600', 'bg-blue-50');
+                link.classList.add('text-gray-600', 'hover:text-blue-600', 'hover:bg-blue-50');
+            });
+            
+            document.getElementById(`${view}-tab`).classList.remove('text-gray-600', 'hover:text-blue-600', 'hover:bg-blue-50');
+            document.getElementById(`${view}-tab`).classList.add('text-blue-600', 'bg-blue-50');
+            
+            // Update page title
+            const titles = {
+                dashboard: 'Панель управления',
+                applicants: 'Соискатели',
+                vacancies: 'Вакансии',
+                education: 'Учебные заведения',
+                positions: 'Должности',
+                qualifications: 'Квалификации'
+            };
+            document.getElementById('page-title').textContent = titles[view];
+            
+            // Update state
+            state.currentView = view;
+            
+            // Load data for the view
+            loadViewData(view);
+        }
+
+        // Load data for the current view
+        function loadViewData(view) {
+            switch(view) {
+                case 'dashboard':
+                    updateDashboardStats();
+                    break;
+                case 'applicants':
+                    renderApplicantsTable();
+                    populateSelect('applicant-education', state.education, 'name');
+                    populateSelect('applicant-qualification', state.qualifications, 'name');
+                    populateSelect('applicant-position', state.positions, 'name');
+                    break;
+                case 'vacancies':
+                    renderVacanciesTable();
+                    populateSelect('vacancy-position', state.positions, 'name');
+                    populateSelect('vacancy-education', state.education, 'name');
+                    populateSelect('vacancy-qualification', state.qualifications, 'name');
+                    break;
+                case 'education':
+                    renderEducationTable();
+                    break;
+                case 'positions':
+                    renderPositionsTable();
+                    break;
+                case 'qualifications':
+                    renderQualificationsTable();
+                    break;
+            }
+        }
+
+        // Populate select options
+        function populateSelect(selectId, items, displayField) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">Выберите...</option>';
+            
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = item[displayField];
+                select.appendChild(option);
+            });
+        }
+
+        // Show form
+        function showForm(type) {
+            state.editMode = false;
+            state.currentEditId = null;
+            
+            // Reset form
+            const form = document.getElementById(`${type}-data-form`);
+            if (form) form.reset();
+            
+            // Show photo placeholder for applicant form
+            if (type === 'applicant') {
+                document.getElementById('applicant-photo-preview').src = 'https://placehold.co/100x100';
+            }
+            
+            // Show form
+            forms[type].classList.remove('hidden');
+        }
+
+        // Hide form
+        function hideForm(type) {
+            forms[type].classList.add('hidden');
+        }
+
+        // Save applicant
+        function saveApplicant() {
+            const applicant = {
+                name: document.getElementById('applicant-name').value,
+                birthdate: document.getElementById('applicant-birthdate').value,
+                phone: document.getElementById('applicant-phone').value,
+                email: document.getElementById('applicant-email').value,
+                education: parseInt(document.getElementById('applicant-education').value),
+                qualification: parseInt(document.getElementById('applicant-qualification').value),
+                position: parseInt(document.getElementById('applicant-position').value)
+            };
+
+            if (document.getElementById('applicant-data-form').checkValidity()) {
+                if (state.editMode) {
+                    // Update existing applicant
+                    const index = state.applicants.findIndex(a => a.id === state.currentEditId);
+                    if (index !== -1) {
+                        state.applicants[index] = { ...state.applicants[index], ...applicant };
+                    }
+                } else {
+                    // Add new applicant
+                    const newId = state.applicants.length > 0 ? Math.max(...state.applicants.map(a => a.id)) + 1 : 1;
+                    state.applicants.push({
+                        id: newId,
+                        ...applicant,
+                        experience: 0,
+                        photo: document.getElementById('applicant-photo-preview').src,
+                        status: 'Рассматривается'
+                    });
+                }
+                
+                hideForm('applicant');
+                renderApplicantsTable();
+                updateDashboardStats();
+            } else {
+                alert('Пожалуйста, заполните все обязательные поля');
+            }
+        }
+
+        // Save vacancy
+        function saveVacancy() {
+            const vacancy = {
+                position: parseInt(document.getElementById('vacancy-position').value),
+                department: document.getElementById('vacancy-department').value,
+                salary: document.getElementById('vacancy-salary').value,
+                experience: document.getElementById('vacancy-experience').value,
+                education: parseInt(document.getElementById('vacancy-education').value),
+                qualification: parseInt(document.getElementById('vacancy-qualification').value),
+                description: document.getElementById('vacancy-description').value,
+                status: document.querySelector('input[name="vacancy-status"]:checked').value
+            };
+
+            if (document.getElementById('vacancy-data-form').checkValidity()) {
+                if (state.editMode) {
+                    // Update existing vacancy
+                    const index = state.vacancies.findIndex(v => v.id === state.currentEditId);
+                    if (index !== -1) {
+                        state.vacancies[index] = { ...state.vacancies[index], ...vacancy };
+                    }
+                } else {
+                    // Add new vacancy
+                    const newId = state.vacancies.length > 0 ? Math.max(...state.vacancies.map(v => v.id)) + 1 : 1;
+                    state.vacancies.push({ id: newId, ...vacancy });
+                }
+                
+                hideForm('vacancy');
+                renderVacanciesTable();
+                updateDashboardStats();
+            } else {
+                alert('Пожалуйста, заполните все обязательные поля');
+            }
+        }
+
+        // Save education
+        function saveEducation() {
+            const education = {
+                name: document.getElementById('education-name').value,
+                type: document.getElementById('education-type').value,
+                address: document.getElementById('education-address').value
+            };
+
+            if (document.getElementById('education-data-form').checkValidity()) {
+                if (state.editMode) {
+                    // Update existing education
+                    const index = state.education.findIndex(e => e.id === state.currentEditId);
+                    if (index !== -1) {
+                        state.education[index] = { ...state.education[index], ...education };
+                    }
+                } else {
+                    // Add new education
+                    const newId = state.education.length > 0 ? Math.max(...state.education.map(e => e.id)) + 1 : 1;
+                    state.education.push({ id: newId, ...education });
+                }
+                
+                hideForm('education');
+                renderEducationTable();
+            } else {
+                alert('Пожалуйста, заполните все обязательные поля');
+            }
+        }
+
+        // Save position
+        function savePosition() {
+            const position = {
+                name: document.getElementById('position-name').value,
+                description: document.getElementById('position-description').value
+            };
+
+            if (document.getElementById('position-data-form').checkValidity()) {
+                if (state.editMode) {
+                    // Update existing position
+                    const index = state.positions.findIndex(p => p.id === state.currentEditId);
+                    if (index !== -1) {
+                        state.positions[index] = { ...state.positions[index], ...position };
+                    }
+                } else {
+                    // Add new position
+                    const newId = state.positions.length > 0 ? Math.max(...state.positions.map(p => p.id)) + 1 : 1;
+                    state.positions.push({ id: newId, ...position });
+                }
+                
+                hideForm('position');
+                renderPositionsTable();
+            } else {
+                alert('Пожалуйста, заполните все обязательные поля');
+            }
+        }
+
+        // Save qualification
+        function saveQualification() {
+            const qualification = {
+                name: document.getElementById('qualification-name').value,
+                description: document.getElementById('qualification-description').value
+            };
+
+            if (document.getElementById('qualification-data-form').checkValidity()) {
+                if (state.editMode) {
+                    // Update existing qualification
+                    const index = state.qualifications.findIndex(q => q.id === state.currentEditId);
+                    if (index !== -1) {
+                        state.qualifications[index] = { ...state.qualifications[index], ...qualification };
+                    }
+                } else {
+                    // Add new qualification
+                    const newId = state.qualifications.length > 0 ? Math.max(...state.qualifications.map(q => q.id)) + 1 : 1;
+                    state.qualifications.push({ id: newId, ...qualification });
+                }
+                
+                hideForm('qualification');
+                renderQualificationsTable();
+            } else {
+                alert('Пожалуйста, заполните все обязательные поля');
+            }
+        }
+
+        // Render applicants table
+        function renderApplicantsTable() {
+            const tbody = document.getElementById('applicants-table-body');
+            tbody.innerHTML = '';
+            
+            state.applicants.forEach(applicant => {
+                const education = state.education.find(e => e.id === applicant.education);
+                const qualification = state.qualifications.find(q => q.id === applicant.qualification);
+                const position = state.positions.find(p => p.id === applicant.position);
+                
+                const tr = document.createElement('tr');
+                tr.className = 'table-row-hover';
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                <img class="h-10 w-10 rounded-full" src="${applicant.photo || 'https://placehold.co/100x100'}" alt="Фото соискателя ${applicant.name}">
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${applicant.name}</div>
+                                <div class="text-sm text-gray-500">${formatDate(applicant.birthdate)}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${applicant.phone}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${applicant.email}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${position ? position.name : 'Не указана'}</div>
+                        <div class="text-sm text-gray-500">${qualification ? qualification.name : ''}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${applicant.status === 'Принят' ? 'bg-green-100 text-green-800' : applicant.status === 'Отклонен' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}">
+                            ${applicant.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button data-id="${applicant.id}" class="text-blue-600 hover:text-blue-900 mr-3 edit-btn">Редакт.</button>
+                        <button data-id="${applicant.id}" class="text-red-600 hover:text-red-900 delete-btn">Удалить</button>
+                    </td>
+                `;
+                
+                tbody.appendChild(tr);
+            });
+            
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    editApplicant(parseInt(this.getAttribute('data-id')));
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    deleteApplicant(parseInt(this.getAttribute('data-id')));
+                });
+            });
+        }
+
+        // Edit applicant
+        function editApplicant(id) {
+            const applicant = state.applicants.find(a => a.id === id);
+            if (applicant) {
+                state.editMode = true;
+                state.currentEditId = id;
+                
+                document.getElementById('applicant-id').value = applicant.id;
+                document.getElementById('applicant-name').value = applicant.name;
+                document.getElementById('applicant-birthdate').value = applicant.birthdate;
+                document.getElementById('applicant-phone').value = applicant.phone;
+                document.getElementById('applicant-email').value = applicant.email;
+                document.getElementById('applicant-education').value = applicant.education;
+                document.getElementById('applicant-qualification').value = applicant.qualification;
+                document.getElementById('applicant-position').value = applicant.position;
+                document.getElementById('applicant-experience').value = applicant.experience;
+                document.getElementById('applicant-photo-preview').src = applicant.photo;
+                
+                forms.applicant.classList.remove('hidden');
+            }
+        }
+
+        // Delete applicant
+        function deleteApplicant(id) {
+            if (confirm('Вы уверены, что хотите удалить этого соискателя?')) {
+                const index = state.applicants.findIndex(a => a.id === id);
+                if (index !== -1) {
+                    state.applicants.splice(index, 1);
+                    renderApplicantsTable();
+                    updateDashboardStats();
+                }
+            }
+        }
+
+        // Render vacancies table
+        function renderVacanciesTable() {
+            const tbody = document.getElementById('vacancies-table-body');
+            tbody.innerHTML = '';
+            
+            state.vacancies.forEach(vacancy => {
+                const position = state.positions.find(p => p.id === vacancy.position);
+                const education = state.education.find(e => e.id === vacancy.education);
+                const qualification = state.qualifications.find(q => q.id === vacancy.qualification);
+                
+                const tr = document.createElement('tr');
+                tr.className = 'table-row-hover';
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${position ? position.name : 'Не указана'}</div>
+                        <div class="text-sm text-gray-500">${vacancy.department}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${vacancy.salary}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${vacancy.experience}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${vacancy.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                            ${vacancy.status === 'open' ? 'Открыта' : 'Закрыта'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button data-id="${vacancy.id}" class="text-blue-600 hover:text-blue-900 mr-3 edit-btn">Редакт.</button>
+                        <button data-id="${vacancy.id}" class="text-red-600 hover:text-red-900 delete-btn">Удалить</button>
+                    </td>
+                `;
+                
+                tbody.appendChild(tr);
+            });
+            
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    editVacancy(parseInt(this.getAttribute('data-id')));
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    deleteVacancy(parseInt(this.getAttribute('data-id')));
+                });
+            });
+        }
+
+        // Edit vacancy
+        function editVacancy(id) {
+            const vacancy = state.vacancies.find(v => v.id === id);
+            if (vacancy) {
+                state.editMode = true;
+                state.currentEditId = id;
+                
+                document.getElementById('vacancy-id').value = vacancy.id;
+                document.getElementById('vacancy-position').value = vacancy.position;
+                document.getElementById('vacancy-department').value = vacancy.department;
+                document.getElementById('vacancy-salary').value = vacancy.salary;
+                document.getElementById('vacancy-experience').value = vacancy.experience;
+                document.getElementById('vacancy-education').value = vacancy.education;
+                document.getElementById('vacancy-qualification').value = vacancy.qualification;
+                document.getElementById('vacancy-description').value = vacancy.description;
+                document.querySelector(`input[name="vacancy-status"][value="${vacancy.status}"]`).checked = true;
+                
+                forms.vacancy.classList.remove('hidden');
+            }
+        }
+
+        // Delete vacancy
+        function deleteVacancy(id) {
+            if (confirm('Вы уверены, что хотите удалить эту вакансию?')) {
+                const index = state.vacancies.findIndex(v => v.id === id);
+                if (index !== -1) {
+                    state.vacancies.splice(index, 1);
+                    renderVacanciesTable();
+                    updateDashboardStats();
+                }
+            }
+        }
+
+        // Render education table
+        function renderEducationTable() {
+            const tbody = document.getElementById('education-table-body');
+            tbody.innerHTML = '';
+            
+            state.education.forEach(edu => {
+                const tr = document.createElement('tr');
+                tr.className = 'table-row-hover';
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${edu.name}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${getEducationTypeName(edu.type)}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${edu.address}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button data-id="${edu.id}" class="text-blue-600 hover:text-blue-900 mr-3 edit-btn">Редакт.</button>
+                        <button data-id="${edu.id}" class="text-red-600 hover:text-red-900 delete-btn">Удалить</button>
+                    </td>
+                `;
+                
+                tbody.appendChild(tr);
+            });
+            
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    editEducation(parseInt(this.getAttribute('data-id')));
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    deleteEducation(parseInt(this.getAttribute('data-id')));
+                });
+            });
+        }
+
+        // Get education type name
+        function getEducationTypeName(type) {
+            const types = {
+                'university': 'Университет',
+                'college': 'Колледж',
+                'school': 'Школа',
+                'courses': 'Курсы'
+            };
+            return types[type] || type;
+        }
+
+        // Edit education
+        function editEducation(id) {
+            const edu = state.education.find(e => e.id === id);
+            if (edu) {
+                state.editMode = true;
+                state.currentEditId = id;
+                
+                document.getElementById('education-id').value = edu.id;
+                document.getElementById('education-name').value = edu.name;
+                document.getElementById('education-type').value = edu.type;
+                document.getElementById('education-address').value = edu.address;
+                
+                forms.education.classList.remove('hidden');
+            }
+        }
+
+        // Delete education
+        function deleteEducation(id) {
+            if (confirm('Вы уверены, что хотите удалить это учебное заведение?')) {
+                // Check if education is used by applicants or vacancies
+                const usedByApplicants = state.applicants.some(a => a.education === id);
+                const usedByVacancies = state.vacancies.some(v => v.education === id);
+                
+                if (usedByApplicants || usedByVacancies) {
+                    alert('Это учебное заведение используется и не может быть удалено');
+                    return;
+                }
+                
+                const index = state.education.findIndex(e => e.id === id);
+                if (index !== -1) {
+                    state.education.splice(index, 1);
+                    renderEducationTable();
+                }
+            }
+        }
+
+        // Render positions table
+        function renderPositionsTable() {
+            const tbody = document.getElementById('position-table-body');
+            tbody.innerHTML = '';
+            
+            state.positions.forEach(position => {
+                const tr = document.createElement('tr');
+                tr.className = 'table-row-hover';
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${position.name}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900 line-clamp-2">${position.description}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button data-id="${position.id}" class="text-blue-600 hover:text-blue-900 mr-3 edit-btn">Редакт.</button>
+                        <button data-id="${position.id}" class="text-red-600 hover:text-red-900 delete-btn">Удалить</button>
+                    </td>
+                `;
+                
+                tbody.appendChild(tr);
+            });
+            
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    editPosition(parseInt(this.getAttribute('data-id')));
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    deletePosition(parseInt(this.getAttribute('data-id')));
+                });
+            });
+        }
+
+        // Edit position
+        function editPosition(id) {
+            const position = state.positions.find(p => p.id === id);
+            if (position) {
+                state.editMode = true;
+                state.currentEditId = id;
+                
+                document.getElementById('position-id').value = position.id;
+                document.getElementById('position-name').value = position.name;
+                document.getElementById('position-description').value = position.description;
+                
+                forms.position.classList.remove('hidden');
+            }
+        }
+
+        // Delete position
+        function deletePosition(id) {
+            if (confirm('Вы уверены, что хотите удалить эту должность?')) {
+                // Check if position is used by applicants or vacancies
+                const usedByApplicants = state.applicants.some(a => a.position === id);
+                const usedByVacancies = state.vacancies.some(v => v.position === id);
+                
+                if (usedByApplicants || usedByVacancies) {
+                    alert('Эта должность используется и не может быть удалена');
+                    return;
+                }
+                
+                const index = state.positions.findIndex(p => p.id === id);
+                if (index !== -1) {
+                    state.positions.splice(index, 1);
+                    renderPositionsTable();
+                }
+            }
+        }
+
+        // Render qualifications table
+        function renderQualificationsTable() {
+            const tbody = document.getElementById('qualification-table-body');
+            tbody.innerHTML = '';
+            
+            state.qualifications.forEach(qualification => {
+                const tr = document.createElement('tr');
+                tr.className = 'table-row-hover';
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${qualification.name}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900 line-clamp-2">${qualification.description}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button data-id="${qualification.id}" class="text-blue-600 hover:text-blue-900 mr-3 edit-btn">Редакт.</button>
+                        <button data-id="${qualification.id}" class="text-red-600 hover:text-red-900 delete-btn">Удалить</button>
+                    </td>
+                `;
+                
+                tbody.appendChild(tr);
+            });
+            
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    editQualification(parseInt(this.getAttribute('data-id')));
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    deleteQualification(parseInt(this.getAttribute('data-id')));
+                });
+            });
+        }
+
+        // Edit qualification
+        function editQualification(id) {
+            const qualification = state.qualifications.find(q => q.id === id);
+            if (qualification) {
+                state.editMode = true;
+                state.currentEditId = id;
+                
+                document.getElementById('qualification-id').value = qualification.id;
+                document.getElementById('qualification-name').value = qualification.name;
+                document.getElementById('qualification-description').value = qualification.description;
+                
+                forms.qualification.classList.remove('hidden');
+            }
+        }
+
+        // Delete qualification
+        function deleteQualification(id) {
+            if (confirm('Вы уверены, что хотите удалить эту квалификацию?')) {
+                // Check if qualification is used by applicants or vacancies
+                const usedByApplicants = state.applicants.some(a => a.qualification === id);
+                const usedByVacancies = state.vacancies.some(v => v.qualification === id);
+                
+                if (usedByApplicants || usedByVacancies) {
+                    alert('Эта квалификация используется и не может быть удалена');
+                    return;
+                }
+                
+                const index = state.qualifications.findIndex(q => q.id === id);
+                if (index !== -1) {
+                    state.qualifications.splice(index, 1);
+                    renderQualificationsTable();
+                }
+            }
+        }
+
+        // Update dashboard statistics
+        function updateDashboardStats() {
+            document.getElementById('total-applicants').textContent = state.applicants.length;
+            document.getElementById('total-vacancies').textContent = state.vacancies.filter(v => v.status === 'open').length;
+            
+            // Calculate top position
+            const positionCounts = {};
+            state.applicants.forEach(applicant => {
+                if (applicant.position) {
+                    positionCounts[applicant.position] = (positionCounts[applicant.position] || 0) + 1;
+                }
+            });
+            
+            let topPositionId = null;
+            let maxCount = 0;
+            
+            for (const [positionId, count] of Object.entries(positionCounts)) {
+                if (count > maxCount) {
+                    maxCount = count;
+                    topPositionId = parseInt(positionId);
+                }
+            }
+            
+            if (topPositionId) {
+                const topPosition = state.positions.find(p => p.id === topPositionId);
+                document.getElementById('top-position').textContent = topPosition?.name || 'Не определено';
+            } else {
+                document.getElementById('top-position').textContent = 'Нет данных';
+            }
+            
+            // Update chart
+            updatePositionsChart(positionCounts);
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            const ctx = document.getElementById('positionsChart').getContext('2d');
+            
+            window.positionsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Количество соискателей',
+                        data: [],
+                        backgroundColor: '#2563eb',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update positions chart
+        function updatePositionsChart(positionCounts) {
+            const labels = [];
+            const data = [];
+            
+            state.positions.forEach(position => {
+                if (positionCounts[position.id]) {
+                    labels.push(position.name);
+                    data.push(positionCounts[position.id]);
+                }
+            });
+            
+            window.positionsChart.data.labels = labels;
+            window.positionsChart.data.datasets[0].data = data;
+            window.positionsChart.update();
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ru-RU');
+        }
+    </script>
+</body>
+</html>
